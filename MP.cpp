@@ -558,7 +558,7 @@ void MP::_updateScene() {
             else if (_planeHeading < 0.0f)
                 _planeHeading += glm::two_pi<float>();
 
-            float Y_OFFSET = 1.0f;
+            float Y_OFFSET = 2.0f;
             glm::vec3 intiLookAtPoint = _planePosition;
             intiLookAtPoint.y += Y_OFFSET;
             _arcballCam->setLookAtPoint(intiLookAtPoint);
@@ -645,7 +645,10 @@ void MP::_updateScene() {
             else if (_vyrmeHeading < 0.0f)
                 _vyrmeHeading += glm::two_pi<float>();
 
-            _arcballCam->setLookAtPoint(_vyrmePosition);
+            float Y_OFFSET = 2.0f;
+            glm::vec3 vyrmeLookAtPoint = _vyrmePosition;
+            vyrmeLookAtPoint.y += Y_OFFSET;
+            _arcballCam->setLookAtPoint(vyrmeLookAtPoint);
             break;
         }
 
