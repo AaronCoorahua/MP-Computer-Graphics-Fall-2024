@@ -8,8 +8,6 @@
 
 Vyrme::Vyrme(GLuint shaderProgramHandle, GLint mvpMtxUniformLocation, GLint normalMtxUniformLocation)
     : _shaderProgramHandle(shaderProgramHandle) {
-    _propAngle = 0.0f;
-    _propAngleRotationSpeed = _PI / 16.0f;
 
     _shaderProgramUniformLocations.mvpMtx    = mvpMtxUniformLocation;
     _shaderProgramUniformLocations.normalMtx = normalMtxUniformLocation;
@@ -19,229 +17,210 @@ Vyrme::Vyrme(GLuint shaderProgramHandle, GLint mvpMtxUniformLocation, GLint norm
     _shaderProgramUniformLocations.materialSpecularColor = glGetUniformLocation(_shaderProgramHandle, "materialSpecularColor");
     _shaderProgramUniformLocations.materialShininess     = glGetUniformLocation(_shaderProgramHandle, "materialShininess");
 
-    _colorBody = glm::vec3(1.0f, 1.0f, 1.0f);
-    _scaleBody = glm::vec3(2.0f, 1.5f, 6.0f);
 
-    _colorTop = glm::vec3(0.5f, 0.5f, 0.5f);
-    _scaleTop = glm::vec3(1.5f, 1.0f, 4.0f);
-    _transTop = glm::vec3(0.0f, 1.25f, 0.5f);
+    _colorBody = glm::vec3(0.3f, 0.0f, 0.3f);
+    _colorHead = glm::vec3(1.0f, 1.0f, 1.0f);
+    _colorFace = glm::vec3(0.3f, 0.3f, 0.3f);
+    _colorBag  = glm::vec3(0.6f, 0.6f, 0.6f);
 
-    _colorWheel = glm::vec3(0.0f, 0.0f, 0.0f);
-    _scaleWheel = glm::vec3(1.0f, 1.0f, 1.0f);
 
-    _wheelPositions[0] = glm::vec3(1.0f, -0.75f, 2.5f);
-    _wheelPositions[1] = glm::vec3(-1.2f, -0.75f, 2.5f);
-    _wheelPositions[2] = glm::vec3(1.0f, -0.75f, -2.5f);
-    _wheelPositions[3] = glm::vec3(-1.2f, -0.75f, -2.5f);
-
-    _colorProp = glm::vec3(1.0f, 1.0f, 1.0f);
-    _scaleProp = glm::vec3(1.5f, 0.2f, 0.1f);
-    _transProp = glm::vec3(0.0f, 0.5f, 3.1f);
-
-    _colorHeadlightOn = glm::vec3(1.0f, 1.0f, 0.0f);
-    _colorHeadlightOff = glm::vec3(0.7f, 0.7f, 0.0f);
-    _scaleHeadlight = glm::vec3(0.4f, 0.4f, 0.4f);
-    _headlightPositions[0] = glm::vec3(0.8f, 0.2f, -3.0f);
-    _headlightPositions[1] = glm::vec3(-0.8f, 0.2f, -3.0f);
-    _headlightState = true;
-    _headlightToggleTime = 0.0f;
-
-    _colorWindow = glm::vec3(0.4f, 0.8f, 1.0f);
-    _scaleWindow = glm::vec3(0.1f, 0.5f, 2.0f);
-    _windowPositions[0] = glm::vec3(0.8f, 1.0f, 0.0f);
-    _windowPositions[1] = glm::vec3(-0.8f, 1.0f, 0.0f);
-
-    _colorHeadlightReverse = glm::vec3(1.0f, 0.0f, 0.0f);
-    _isMovingBackward = false;
+    position = glm::vec3(0.0f);
 }
 
 void Vyrme::drawVehicle(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx) {
-    _drawCarBody(modelMtx, viewMtx, projMtx);
-    _drawCarTop(modelMtx, viewMtx, projMtx);
-    _drawCarWindows(modelMtx, viewMtx, projMtx);
-    _drawCarWheels(modelMtx, viewMtx, projMtx);
-    _drawCarPropeller(modelMtx, viewMtx, projMtx);
-    _drawCarHeadlights(modelMtx, viewMtx, projMtx);
+
+    modelMtx = glm::translate(modelMtx, position);
+    modelMtx = glm::rotate(modelMtx, rotationAngle, CSCI441::Y_AXIS);
+
+    _drawBody(modelMtx, viewMtx, projMtx);
+    _drawArmRight(modelMtx, viewMtx, projMtx);
+    _drawArmLeft(modelMtx, viewMtx, projMtx);
+    _drawHead(modelMtx, viewMtx, projMtx);
+    _drawFace(modelMtx, viewMtx, projMtx);
+    _drawCones(modelMtx, viewMtx, projMtx);
+    _drawBag(modelMtx, viewMtx, projMtx);
 }
 
 void Vyrme::moveForward() {
-    _isMovingBackward = false;
-    _propAngle += _propAngleRotationSpeed;
-    if (_propAngle > _2PI) _propAngle -= _2PI;
 
-    _headlightToggleTime += 0.2f;
-    if (_headlightToggleTime >= 1.0f) {
-        _headlightToggleTime = 0.0f;
-        _headlightState = !_headlightState;
+    if (_leftArmSwingForward) {
+        _leftArmAngle += _armSwingSpeed;
+        if (_leftArmAngle >= _armSwingLimit) {
+            _leftArmSwingForward = false;
+        }
+    } else {
+        _leftArmAngle -= _armSwingSpeed;
+        if (_leftArmAngle <= -_armSwingLimit) {
+            _leftArmSwingForward = true;
+        }
     }
-}
 
-void Vyrme::moveBackward() {
-    _isMovingBackward = true;
-    _propAngle -= _propAngleRotationSpeed;
-    if (_propAngle < 0.0f) _propAngle += _2PI;
-
-    _headlightToggleTime += 0.2f;
-    if (_headlightToggleTime >= 1.0f) {
-        _headlightToggleTime = 0.0f;
-        _headlightState = !_headlightState;
-    }
-}
-
-void Vyrme::_drawCarBody(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx) const {
-    glm::mat4 bodyMtx = modelMtx;
-    bodyMtx = glm::scale(bodyMtx, _scaleBody);
-
-    _computeAndSendMatrixUniforms(bodyMtx, viewMtx, projMtx);
-
-    glm::vec3 ambientColor  = _colorBody * 0.2f;
-    glm::vec3 diffuseColor  = _colorBody;
-    glm::vec3 specularColor = glm::vec3(0.5f);
-    float shininess         = 32.0f;
-
-    glProgramUniform3fv(_shaderProgramHandle, _shaderProgramUniformLocations.materialAmbientColor, 1, glm::value_ptr(ambientColor));
-    glProgramUniform3fv(_shaderProgramHandle, _shaderProgramUniformLocations.materialDiffuseColor, 1, glm::value_ptr(diffuseColor));
-    glProgramUniform3fv(_shaderProgramHandle, _shaderProgramUniformLocations.materialSpecularColor, 1, glm::value_ptr(specularColor));
-    glProgramUniform1f(_shaderProgramHandle, _shaderProgramUniformLocations.materialShininess, shininess);
-
-    CSCI441::drawSolidCube(1.0f);
-}
-
-void Vyrme::_drawCarTop(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx) const {
-    glm::mat4 topMtx = modelMtx;
-    topMtx = glm::translate(topMtx, _transTop);
-    topMtx = glm::scale(topMtx, _scaleTop);
-
-    _computeAndSendMatrixUniforms(topMtx, viewMtx, projMtx);
-
-    glm::vec3 ambientColor  = _colorTop * 0.2f;
-    glm::vec3 diffuseColor  = _colorTop;
-    glm::vec3 specularColor = glm::vec3(0.5f);
-    float shininess         = 16.0f;
-
-    glProgramUniform3fv(_shaderProgramHandle, _shaderProgramUniformLocations.materialAmbientColor, 1, glm::value_ptr(ambientColor));
-    glProgramUniform3fv(_shaderProgramHandle, _shaderProgramUniformLocations.materialDiffuseColor, 1, glm::value_ptr(diffuseColor));
-    glProgramUniform3fv(_shaderProgramHandle, _shaderProgramUniformLocations.materialSpecularColor, 1, glm::value_ptr(specularColor));
-    glProgramUniform1f(_shaderProgramHandle, _shaderProgramUniformLocations.materialShininess, shininess);
-
-    CSCI441::drawSolidCube(1.0f);
-}
-
-void Vyrme::_drawCarWheels(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx) const {
-    int numSpokes = 8;
-    for (int i = 0; i < 4; ++i) {
-        glm::mat4 wheelMtx = modelMtx;
-        wheelMtx = glm::translate(wheelMtx, _wheelPositions[i]);
-        wheelMtx = glm::rotate(wheelMtx, glm::radians(-90.0f), CSCI441::Z_AXIS);
-        wheelMtx = glm::rotate(wheelMtx, _propAngle, CSCI441::Y_AXIS);
-        wheelMtx = glm::scale(wheelMtx, _scaleWheel);
-
-        _computeAndSendMatrixUniforms(wheelMtx, viewMtx, projMtx);
-
-        glm::vec3 ambientColor  = _colorWheel * 0.2f;
-        glm::vec3 diffuseColor  = _colorWheel;
-        glm::vec3 specularColor = glm::vec3(0.3f);
-        float shininess         = 10.0f;
-
-        glProgramUniform3fv(_shaderProgramHandle, _shaderProgramUniformLocations.materialAmbientColor, 1, glm::value_ptr(ambientColor));
-        glProgramUniform3fv(_shaderProgramHandle, _shaderProgramUniformLocations.materialDiffuseColor, 1, glm::value_ptr(diffuseColor));
-        glProgramUniform3fv(_shaderProgramHandle, _shaderProgramUniformLocations.materialSpecularColor, 1, glm::value_ptr(specularColor));
-        glProgramUniform1f(_shaderProgramHandle, _shaderProgramUniformLocations.materialShininess, shininess);
-
-        CSCI441::drawSolidCylinder(0.5f, 0.5f, 0.2f, 16, 16);
-
-        for (int j = 0; j < numSpokes; ++j) {
-            glm::mat4 spokeMtx = wheelMtx;
-            spokeMtx = glm::rotate(spokeMtx, glm::radians(360.0f / numSpokes * j), CSCI441::Z_AXIS);
-            spokeMtx = glm::translate(spokeMtx, glm::vec3(0.0f, 0.0f, 0.25f));
-            spokeMtx = glm::scale(spokeMtx, glm::vec3(0.05f, 0.05f, 0.5f));
-
-            _computeAndSendMatrixUniforms(spokeMtx, viewMtx, projMtx);
-
-            CSCI441::drawSolidCube(1.0f);
+    if (_rightArmSwingForward) {
+        _rightArmAngle += _armSwingSpeed;
+        if (_rightArmAngle >= _armSwingLimit) {
+            _rightArmSwingForward = false;
+        }
+    } else {
+        _rightArmAngle -= _armSwingSpeed;
+        if (_rightArmAngle <= -_armSwingLimit) {
+            _rightArmSwingForward = true;
         }
     }
 }
 
-void Vyrme::_drawCarPropeller(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx) const {
-    glm::mat4 propMtx = modelMtx;
-    propMtx = glm::translate(propMtx, _transProp);
-    propMtx = glm::rotate(propMtx, _propAngle, CSCI441::Z_AXIS);
-    propMtx = glm::scale(propMtx, _scaleProp);
+void Vyrme::moveBackward() {
+    if (_leftArmSwingForward) {
+        _leftArmAngle += _armSwingSpeed;
+        if (_leftArmAngle >= _armSwingLimit) {
+            _leftArmSwingForward = false;
+        }
+    } else {
+        _leftArmAngle -= _armSwingSpeed;
+        if (_leftArmAngle <= -_armSwingLimit) {
+            _leftArmSwingForward = true;
+        }
+    }
 
-    _computeAndSendMatrixUniforms(propMtx, viewMtx, projMtx);
+    if (_rightArmSwingForward) {
+        _rightArmAngle += _armSwingSpeed;
+        if (_rightArmAngle >= _armSwingLimit) {
+            _rightArmSwingForward = false;
+        }
+    } else {
+        _rightArmAngle -= _armSwingSpeed;
+        if (_rightArmAngle <= -_armSwingLimit) {
+            _rightArmSwingForward = true;
+        }
+    }
 
-    glm::vec3 ambientColor  = _colorProp * 0.2f;
-    glm::vec3 diffuseColor  = _colorProp;
-    glm::vec3 specularColor = glm::vec3(0.5f);
-    float shininess         = 32.0f;
+}
+void Vyrme::_drawBody(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx) const {
+    glm::mat4 bodyMtx = modelMtx;
+    bodyMtx = glm::scale(bodyMtx, glm::vec3(0.8f, 2.0f, 0.5f));
 
-    glProgramUniform3fv(_shaderProgramHandle, _shaderProgramUniformLocations.materialAmbientColor, 1, glm::value_ptr(ambientColor));
-    glProgramUniform3fv(_shaderProgramHandle, _shaderProgramUniformLocations.materialDiffuseColor, 1, glm::value_ptr(diffuseColor));
-    glProgramUniform3fv(_shaderProgramHandle, _shaderProgramUniformLocations.materialSpecularColor, 1, glm::value_ptr(specularColor));
-    glProgramUniform1f(_shaderProgramHandle, _shaderProgramUniformLocations.materialShininess, shininess);
+    _computeAndSendMatrixUniforms(bodyMtx, viewMtx, projMtx);
+
+    _setMaterialColors(_colorBody, 32.0f);
 
     CSCI441::drawSolidCube(1.0f);
 }
 
-void Vyrme::_drawCarHeadlights(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx) {
-    glm::vec3 headlightColor;
+void Vyrme::_drawArmLeft(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx) const {
+    glm::mat4 armMtx = modelMtx;
 
-    if (_isMovingBackward) {
-        headlightColor = _headlightState ? _colorHeadlightOn : _colorHeadlightOff;
-    } else {
-        headlightColor = _colorHeadlightReverse;
-    }
+    armMtx = glm::translate(armMtx, glm::vec3(-0.55f, 0.7f, 0.0f));
 
-    for (int i = 0; i < 2; ++i) {
-        glm::mat4 lightMtx = modelMtx;
-        lightMtx = glm::translate(lightMtx, _headlightPositions[i]);
-        lightMtx = glm::scale(lightMtx, _scaleHeadlight);
-        _computeAndSendMatrixUniforms(lightMtx, viewMtx, projMtx);
+    armMtx = glm::rotate(armMtx, _leftArmAngle, CSCI441::X_AXIS);
 
-        glm::vec3 ambientColor  = headlightColor * 0.2f;
-        glm::vec3 diffuseColor  = headlightColor;
-        glm::vec3 specularColor = glm::vec3(0.8f);
-        float shininess         = 64.0f;
+    armMtx = glm::translate(armMtx, glm::vec3(0.0f, -0.7f, 0.0f));
 
-        glProgramUniform3fv(_shaderProgramHandle, _shaderProgramUniformLocations.materialAmbientColor, 1, glm::value_ptr(ambientColor));
-        glProgramUniform3fv(_shaderProgramHandle, _shaderProgramUniformLocations.materialDiffuseColor, 1, glm::value_ptr(diffuseColor));
-        glProgramUniform3fv(_shaderProgramHandle, _shaderProgramUniformLocations.materialSpecularColor, 1, glm::value_ptr(specularColor));
-        glProgramUniform1f(_shaderProgramHandle, _shaderProgramUniformLocations.materialShininess, shininess);
-
-        CSCI441::drawSolidCube(1.0f);
-    }
+    armMtx = glm::scale(armMtx, glm::vec3(0.30f, 0.9f, 0.3f));
+    _computeAndSendMatrixUniforms(armMtx, viewMtx, projMtx);
+    _setMaterialColors(_colorBody, 32.0f);
+    CSCI441::drawSolidCube(1.0f);
 }
 
-void Vyrme::_drawCarWindows(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx) const {
-    for (int i = 0; i < 2; ++i) {
-        glm::mat4 windowMtx = modelMtx;
+void Vyrme::_drawArmRight(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx) const {
+    glm::mat4 armMtx = modelMtx;
 
-        windowMtx = glm::translate(windowMtx, _windowPositions[i]);
+    armMtx = glm::translate(armMtx, glm::vec3(0.55f, 0.7f, 0.0f));
 
-        windowMtx = glm::scale(windowMtx, _scaleWindow);
+    armMtx = glm::rotate(armMtx, _rightArmAngle, CSCI441::X_AXIS);
 
-        _computeAndSendMatrixUniforms(windowMtx, viewMtx, projMtx);
+    armMtx = glm::translate(armMtx, glm::vec3(0.0f, -0.7f, 0.0f));
 
+    armMtx = glm::scale(armMtx, glm::vec3(0.30f, 0.9f, 0.3f));
 
-        glm::vec3 ambientColor  = _colorWindow * 0.2f;
-        glm::vec3 diffuseColor  = _colorWindow;
-        glm::vec3 specularColor = glm::vec3(0.3f);
-        float shininess         = 16.0f;
+    _computeAndSendMatrixUniforms(armMtx, viewMtx, projMtx);
 
-        glProgramUniform3fv(_shaderProgramHandle, _shaderProgramUniformLocations.materialAmbientColor, 1, glm::value_ptr(ambientColor));
-        glProgramUniform3fv(_shaderProgramHandle, _shaderProgramUniformLocations.materialDiffuseColor, 1, glm::value_ptr(diffuseColor));
-        glProgramUniform3fv(_shaderProgramHandle, _shaderProgramUniformLocations.materialSpecularColor, 1, glm::value_ptr(specularColor));
-        glProgramUniform1f(_shaderProgramHandle, _shaderProgramUniformLocations.materialShininess, shininess);
+    _setMaterialColors(_colorBody, 32.0f);
 
-        CSCI441::drawSolidCube(1.0f);
-    }
+    CSCI441::drawSolidCube(1.0f);
 }
 
-void Vyrme::_computeAndSendMatrixUniforms(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx) const {
+void Vyrme::_drawHead(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx) const {
+    glm::mat4 headMtx = modelMtx;
+    headMtx = glm::translate(headMtx, glm::vec3(0.0f, 1.1f, 0.0f));
+    headMtx = glm::scale(headMtx, glm::vec3(0.8f));
+
+    _computeAndSendMatrixUniforms(headMtx, viewMtx, projMtx);
+
+    _setMaterialColors(_colorHead, 64.0f);
+
+    CSCI441::drawSolidSphere(1.0f, 20, 20);
+}
+
+void Vyrme::_drawFace(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx) const {
+    glm::mat4 faceMtx = modelMtx;
+    faceMtx = glm::translate(faceMtx, glm::vec3(0.0f, 1.1f, -0.18f));
+    faceMtx = glm::scale(faceMtx, glm::vec3(0.7f));
+
+    _computeAndSendMatrixUniforms(faceMtx, viewMtx, projMtx);
+
+    _setMaterialColors(_colorFace, 32.0f);
+
+    CSCI441::drawSolidSphere(1.0f, 20, 20);
+}
+
+void Vyrme::_drawCones(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx) const {
+
+    glm::mat4 coneRightMtx = modelMtx;
+    coneRightMtx = glm::translate(coneRightMtx, glm::vec3(0.7f, 1.0f, 0.0f));
+    coneRightMtx = glm::rotate(coneRightMtx, glm::radians(-90.0f), CSCI441::Z_AXIS);
+    coneRightMtx = glm::scale(coneRightMtx, glm::vec3(0.25f, 0.6f, 0.25f));
+
+    _computeAndSendMatrixUniforms(coneRightMtx, viewMtx, projMtx);
+
+    _setMaterialColors(_colorFace, 32.0f);
+
+    CSCI441::drawSolidCone(1.0f, 1.0f, 20, 20);
+
+
+    glm::mat4 coneLeftMtx = modelMtx;
+    coneLeftMtx = glm::translate(coneLeftMtx, glm::vec3(-0.7f, 1.0f, 0.0f));
+    coneLeftMtx = glm::rotate(coneLeftMtx, glm::radians(90.0f), CSCI441::Z_AXIS);
+    coneLeftMtx = glm::scale(coneLeftMtx, glm::vec3(0.25f, 0.6f, 0.25f));
+
+    _computeAndSendMatrixUniforms(coneLeftMtx, viewMtx, projMtx);
+
+    _setMaterialColors(_colorFace, 32.0f);
+
+    CSCI441::drawSolidCone(1.0f, 1.0f, 20, 20);
+}
+
+void Vyrme::_drawBag(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx) const {
+    glm::mat4 bagMtx = modelMtx;
+    bagMtx = glm::translate(bagMtx, glm::vec3(0.0f, 0.0f, 0.35f));
+    bagMtx = glm::scale(bagMtx, glm::vec3(0.4f, 0.6f, 0.3f));
+
+    _computeAndSendMatrixUniforms(bagMtx, viewMtx, projMtx);
+
+    _setMaterialColors(_colorBag, 32.0f);
+
+    CSCI441::drawSolidCube(1.0f);
+}
+
+void Vyrme::_computeAndSendMatrixUniforms(glm::mat4 modelMtx, glm::mat4 viewMtx,
+                                          glm::mat4 projMtx) const {
     glm::mat4 mvpMtx = projMtx * viewMtx * modelMtx;
-    glProgramUniformMatrix4fv(_shaderProgramHandle, _shaderProgramUniformLocations.mvpMtx, 1, GL_FALSE, glm::value_ptr(mvpMtx));
+    glProgramUniformMatrix4fv(_shaderProgramHandle, _shaderProgramUniformLocations.mvpMtx, 1,
+                              GL_FALSE, glm::value_ptr(mvpMtx));
 
     glm::mat3 normalMtx = glm::mat3(glm::transpose(glm::inverse(modelMtx)));
-    glProgramUniformMatrix3fv(_shaderProgramHandle, _shaderProgramUniformLocations.normalMtx, 1, GL_FALSE, glm::value_ptr(normalMtx));
+    glProgramUniformMatrix3fv(_shaderProgramHandle, _shaderProgramUniformLocations.normalMtx, 1,
+                              GL_FALSE, glm::value_ptr(normalMtx));
+}
+
+void Vyrme::_setMaterialColors(glm::vec3 color, float shininess) const {
+    glm::vec3 ambientColor  = color * 0.2f;
+    glm::vec3 diffuseColor  = color;
+    glm::vec3 specularColor = glm::vec3(0.5f);
+
+    glProgramUniform3fv(_shaderProgramHandle, _shaderProgramUniformLocations.materialAmbientColor, 1,
+                        glm::value_ptr(ambientColor));
+    glProgramUniform3fv(_shaderProgramHandle, _shaderProgramUniformLocations.materialDiffuseColor, 1,
+                        glm::value_ptr(diffuseColor));
+    glProgramUniform3fv(_shaderProgramHandle, _shaderProgramUniformLocations.materialSpecularColor, 1,
+                        glm::value_ptr(specularColor));
+    glProgramUniform1f(_shaderProgramHandle, _shaderProgramUniformLocations.materialShininess, shininess);
 }

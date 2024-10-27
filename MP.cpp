@@ -254,7 +254,7 @@ void MP::_generateEnvironment() {
     // Generate Trees
     for (GLfloat x = LEFT_END_POINT; x <= RIGHT_END_POINT; x += GRID_SPACING_WIDTH) {
         for (GLfloat z = BOTTOM_END_POINT; z <= TOP_END_POINT; z += GRID_SPACING_LENGTH) {
-            if (getRand() < 0.3f) { // 30% chance to place a tree
+            if (getRand() < 0.0f) { // 30% chance to place a tree
                 glm::mat4 modelMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(x, 0.0f, z));
                 TreeData tree = { modelMatrix };
                 _trees.emplace_back(tree);
@@ -265,7 +265,7 @@ void MP::_generateEnvironment() {
     // Generate Rocks
     for (GLfloat x = LEFT_END_POINT; x <= RIGHT_END_POINT; x += GRID_SPACING_WIDTH) {
         for (GLfloat z = BOTTOM_END_POINT; z <= TOP_END_POINT; z += GRID_SPACING_LENGTH) {
-            if (getRand() < 0.2f) { // 20% chance to place a rock
+            if (getRand() < 0.0f) { // 20% chance to place a rock
                 glm::mat4 modelMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(x + 2.0f, 0.0f, z + 2.0f));
                 float scale = getRand() * 2.0f + 1.0f; // Random scale between 1 and 3
                 RockData rock = { modelMatrix, scale };
@@ -288,7 +288,7 @@ void MP::mSetupScene() {
     _rossPosition = glm::vec3(5.0f, -1.3f, 0.0f);
     _rossHeading = 0.0f;
 
-    _vyrmePosition = glm::vec3(10.0f, 0.0f, 0.0f);
+    _vyrmePosition = glm::vec3(10.0f, -0.3f, 0.0f);
     _vyrmeHeading = 0.0f;
 
     // Set up the projection matrix

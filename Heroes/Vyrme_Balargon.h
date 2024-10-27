@@ -1,5 +1,5 @@
-#ifndef Vyrme_Balargon
-#define Vyrme_Balargon
+#ifndef VYRME_H
+#define VYRME_H
 
 #include <glad/gl.h>
 
@@ -10,20 +10,15 @@ class Vyrme {
 public:
     Vyrme(GLuint shaderProgramHandle, GLint mvpMtxUniformLocation, GLint normalMtxUniformLocation);
 
-    void drawVehicle( glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx );
+    void drawVehicle(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx);
 
     void moveForward();
     void moveBackward();
 
+    glm::vec3 getPosition() const { return position; }
+    float getRotationAngle() const { return rotationAngle; }
+
 private:
-
-    glm::vec3 _colorWindow;
-    glm::vec3 _scaleWindow;
-    glm::vec3 _windowPositions[2];
-
-    GLfloat _propAngle;
-    GLfloat _propAngleRotationSpeed;
-
     GLuint _shaderProgramHandle;
     struct ShaderProgramUniformLocations {
         GLint mvpMtx;
@@ -35,42 +30,31 @@ private:
     } _shaderProgramUniformLocations;
 
     glm::vec3 _colorBody;
-    glm::vec3 _scaleBody;
+    glm::vec3 _colorHead;
+    glm::vec3 _colorFace;
+    glm::vec3 _colorBag;
 
-    glm::vec3 _colorTop;
-    glm::vec3 _scaleTop;
-    glm::vec3 _transTop;
+    glm::vec3 position;
+    float rotationAngle = 0.0f;
 
-    glm::vec3 _colorWheel;
-    glm::vec3 _scaleWheel;
-    glm::vec3 _wheelPositions[4];
+    void _drawBody(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx) const;
+    void _drawArmRight(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx) const;
+    void _drawArmLeft(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx) const;
+    void _drawHead(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx) const;
+    void _drawFace(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx) const;
+    void _drawCones(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx) const;
+    void _drawBag(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx) const;
 
-    glm::vec3 _colorProp;
-    glm::vec3 _scaleProp;
-    glm::vec3 _transProp;
+    void _computeAndSendMatrixUniforms(glm::mat4 modelMtx, glm::mat4 viewMtx,
+                                       glm::mat4 projMtx) const;
+    void _setMaterialColors(glm::vec3 color, float shininess) const;
 
-    glm::vec3 _colorHeadlightOn;
-    glm::vec3 _colorHeadlightOff;
-    glm::vec3 _scaleHeadlight;
-    glm::vec3 _headlightPositions[2];
-    bool _headlightState;
-    GLfloat _headlightToggleTime;
-    glm::vec3 _colorHeadlightReverse;
-    bool _isMovingBackward;
-
-
-    const GLfloat _PI = glm::pi<float>();
-    const GLfloat _2PI = glm::two_pi<float>();
-    const GLfloat _PI_OVER_2 = glm::half_pi<float>();
-
-    void _drawCarBody(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx ) const;
-    void _drawCarTop(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx ) const;
-    void _drawCarWheels(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx ) const;
-    void _drawCarPropeller(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx ) const;
-    void _drawCarHeadlights(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx );
-    void _drawCarWindows(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx ) const;
-
-    void _computeAndSendMatrixUniforms(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx) const;
+    float _leftArmAngle = 0.0f;
+    float _rightArmAngle = 0.0f;
+    bool _leftArmSwingForward = true;
+    bool _rightArmSwingForward = false;
+    float _armSwingSpeed = glm::radians(1.0f);
+    float _armSwingLimit = glm::radians(30.0f);
 };
 
-#endif //Vyrme_Balargon
+#endif // VYRME_H
