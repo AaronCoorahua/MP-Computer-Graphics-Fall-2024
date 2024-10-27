@@ -8,8 +8,6 @@
 
 Ross::Ross(GLuint shaderProgramHandle, GLint mvpMtxUniformLocation, GLint normalMtxUniformLocation)
     : _shaderProgramHandle(shaderProgramHandle) {
-    _propAngle = 0.0f;
-    _propAngleRotationSpeed = _PI / 16.0f;
 
     _shaderProgramUniformLocations.mvpMtx    = mvpMtxUniformLocation;
     _shaderProgramUniformLocations.normalMtx = normalMtxUniformLocation;
@@ -19,76 +17,65 @@ Ross::Ross(GLuint shaderProgramHandle, GLint mvpMtxUniformLocation, GLint normal
     _shaderProgramUniformLocations.materialSpecularColor = glGetUniformLocation(_shaderProgramHandle, "materialSpecularColor");
     _shaderProgramUniformLocations.materialShininess     = glGetUniformLocation(_shaderProgramHandle, "materialShininess");
 
-    _colorBody = glm::vec3(1.0f, 1.0f, 1.0f);
-    _scaleBody = glm::vec3(2.0f, 1.5f, 6.0f);
+    // Initialize wizard-specific variables
+    _colorBody = glm::vec3(0.5f, 0.5f, 0.5f);          // Gray color for the body
+    _scaleBody = glm::vec3(0.055f, 0.055f, 0.055f);
 
-    _colorTop = glm::vec3(0.5f, 0.5f, 0.5f);
-    _scaleTop = glm::vec3(1.5f, 1.0f, 4.0f);
-    _transTop = glm::vec3(0.0f, 1.25f, 0.5f);
+    _colorHead = glm::vec3(0.941f, 0.725f, 0.2f);      // Skin color for the head
+    _scaleHead = glm::vec3(0.04f, 0.06f, 0.04f);
+    _transHead = glm::vec3(0.0f, 0.22f, 0.0f);
 
-    _colorWheel = glm::vec3(0.0f, 0.0f, 0.0f);
-    _scaleWheel = glm::vec3(1.0f, 1.0f, 1.0f);
+    _colorHat = _colorBody;                             // Same color as body
+    _scaleHat = glm::vec3(0.02f, 0.02f, 0.02f);
+    _transHat = glm::vec3(0.0f, 0.24f, 0.0f);
 
-    _wheelPositions[0] = glm::vec3(1.0f, -0.75f, 2.5f);
-    _wheelPositions[1] = glm::vec3(-1.2f, -0.75f, 2.5f);
-    _wheelPositions[2] = glm::vec3(1.0f, -0.75f, -2.5f);
-    _wheelPositions[3] = glm::vec3(-1.2f, -0.75f, -2.5f);
+    _colorBeard = glm::vec3(1.0f, 1.0f, 1.0f);          // White color for the beard
+    _scaleBeard = glm::vec3(0.03f, 0.03f, 0.03f);
+    _transBeard = glm::vec3(0.00f, 0.19f, 0.0f);
+    _angleBeard = glm::radians(-135.0f);
 
-    _colorProp = glm::vec3(1.0f, 1.0f, 1.0f);
-    _scaleProp = glm::vec3(1.5f, 0.2f, 0.1f);
-    _transProp = glm::vec3(0.0f, 0.5f, 3.1f);
+    _colorStaff = glm::vec3(0.54f, 0.46f, 0.37f);       // Brown color for the staff
+    _scaleStaff = glm::vec3(0.08f, 1.9f, 0.08f);
+    _transStaff = glm::vec3(0.04f, 0.15f, 0.01f);
+    _staffAngle = 0.0f;
 
-    _colorHeadlightOn = glm::vec3(1.0f, 1.0f, 0.0f);
-    _colorHeadlightOff = glm::vec3(0.7f, 0.7f, 0.0f);
-    _scaleHeadlight = glm::vec3(0.4f, 0.4f, 0.4f);
-    _headlightPositions[0] = glm::vec3(0.8f, 0.2f, -3.0f);
-    _headlightPositions[1] = glm::vec3(-0.8f, 0.2f, -3.0f);
-    _headlightState = true;
-    _headlightToggleTime = 0.0f;
-
-    _colorWindow = glm::vec3(0.4f, 0.8f, 1.0f);
-    _scaleWindow = glm::vec3(0.1f, 0.5f, 2.0f);
-    _windowPositions[0] = glm::vec3(0.8f, 1.0f, 0.0f);
-    _windowPositions[1] = glm::vec3(-0.8f, 1.0f, 0.0f);
-
-    _colorHeadlightReverse = glm::vec3(1.0f, 0.0f, 0.0f);
-    _isMovingBackward = false;
+    // Initialize position (if needed)
+    position = glm::vec3(0.0f);
 }
 
 void Ross::drawVehicle(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx) {
-    _drawCarBody(modelMtx, viewMtx, projMtx);
-    _drawCarTop(modelMtx, viewMtx, projMtx);
-    _drawCarWindows(modelMtx, viewMtx, projMtx);
-    _drawCarWheels(modelMtx, viewMtx, projMtx);
-    _drawCarPropeller(modelMtx, viewMtx, projMtx);
-    _drawCarHeadlights(modelMtx, viewMtx, projMtx);
+
+    float scaleCharacter= 10.0f;
+    modelMtx = glm::scale(modelMtx, glm::vec3(scaleCharacter));
+    // Draw individual components
+    _drawBody(modelMtx, viewMtx, projMtx);        // The body
+    _drawHead(modelMtx, viewMtx, projMtx);        // The head
+    _drawHat(modelMtx, viewMtx, projMtx);         // The hat
+    _drawBeard(modelMtx, viewMtx, projMtx);       // The beard
+    _drawStaff(modelMtx, viewMtx, projMtx);       // The staff
 }
 
 void Ross::moveForward() {
-    _isMovingBackward = false;
-    _propAngle += _propAngleRotationSpeed;
-    if (_propAngle > _2PI) _propAngle -= _2PI;
+    isMovingForward = true;
+    position.z -= movementSpeed;
 
-    _headlightToggleTime += 0.2f;
-    if (_headlightToggleTime >= 1.0f) {
-        _headlightToggleTime = 0.0f;
-        _headlightState = !_headlightState;
+    _staffAngle -= rotationSpeed;
+    if (_staffAngle > glm::two_pi<float>()) {
+        _staffAngle -= glm::two_pi<float>();
     }
 }
 
 void Ross::moveBackward() {
-    _isMovingBackward = true;
-    _propAngle -= _propAngleRotationSpeed;
-    if (_propAngle < 0.0f) _propAngle += _2PI;
+    isMovingForward = false;
+    position.z += movementSpeed;
 
-    _headlightToggleTime += 0.2f;
-    if (_headlightToggleTime >= 1.0f) {
-        _headlightToggleTime = 0.0f;
-        _headlightState = !_headlightState;
+    _staffAngle -= rotationSpeed;
+    if (_staffAngle > glm::two_pi<float>()) {
+        _staffAngle -= glm::two_pi<float>();
     }
 }
 
-void Ross::_drawCarBody(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx) const {
+void Ross::_drawBody(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx) const {
     glm::mat4 bodyMtx = modelMtx;
     bodyMtx = glm::scale(bodyMtx, _scaleBody);
 
@@ -104,75 +91,18 @@ void Ross::_drawCarBody(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx
     glProgramUniform3fv(_shaderProgramHandle, _shaderProgramUniformLocations.materialSpecularColor, 1, glm::value_ptr(specularColor));
     glProgramUniform1f(_shaderProgramHandle, _shaderProgramUniformLocations.materialShininess, shininess);
 
-    CSCI441::drawSolidCube(1.0f);
+    CSCI441::drawSolidCone(0.8f, 5.0f, 20, 20);
 }
 
-void Ross::_drawCarTop(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx) const {
-    glm::mat4 topMtx = modelMtx;
-    topMtx = glm::translate(topMtx, _transTop);
-    topMtx = glm::scale(topMtx, _scaleTop);
+void Ross::_drawHead(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx) const {
+    glm::mat4 headMtx = modelMtx;
+    headMtx = glm::translate(headMtx, _transHead);
+    headMtx = glm::scale(headMtx, _scaleHead);
 
-    _computeAndSendMatrixUniforms(topMtx, viewMtx, projMtx);
+    _computeAndSendMatrixUniforms(headMtx, viewMtx, projMtx);
 
-    glm::vec3 ambientColor  = _colorTop * 0.2f;
-    glm::vec3 diffuseColor  = _colorTop;
-    glm::vec3 specularColor = glm::vec3(0.5f);
-    float shininess         = 16.0f;
-
-    glProgramUniform3fv(_shaderProgramHandle, _shaderProgramUniformLocations.materialAmbientColor, 1, glm::value_ptr(ambientColor));
-    glProgramUniform3fv(_shaderProgramHandle, _shaderProgramUniformLocations.materialDiffuseColor, 1, glm::value_ptr(diffuseColor));
-    glProgramUniform3fv(_shaderProgramHandle, _shaderProgramUniformLocations.materialSpecularColor, 1, glm::value_ptr(specularColor));
-    glProgramUniform1f(_shaderProgramHandle, _shaderProgramUniformLocations.materialShininess, shininess);
-
-    CSCI441::drawSolidCube(1.0f);
-}
-
-void Ross::_drawCarWheels(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx) const {
-    int numSpokes = 8;
-    for (int i = 0; i < 4; ++i) {
-        glm::mat4 wheelMtx = modelMtx;
-        wheelMtx = glm::translate(wheelMtx, _wheelPositions[i]);
-        wheelMtx = glm::rotate(wheelMtx, glm::radians(-90.0f), CSCI441::Z_AXIS);
-        wheelMtx = glm::rotate(wheelMtx, _propAngle, CSCI441::Y_AXIS);
-        wheelMtx = glm::scale(wheelMtx, _scaleWheel);
-
-        _computeAndSendMatrixUniforms(wheelMtx, viewMtx, projMtx);
-
-        glm::vec3 ambientColor  = _colorWheel * 0.2f;
-        glm::vec3 diffuseColor  = _colorWheel;
-        glm::vec3 specularColor = glm::vec3(0.3f);
-        float shininess         = 10.0f;
-
-        glProgramUniform3fv(_shaderProgramHandle, _shaderProgramUniformLocations.materialAmbientColor, 1, glm::value_ptr(ambientColor));
-        glProgramUniform3fv(_shaderProgramHandle, _shaderProgramUniformLocations.materialDiffuseColor, 1, glm::value_ptr(diffuseColor));
-        glProgramUniform3fv(_shaderProgramHandle, _shaderProgramUniformLocations.materialSpecularColor, 1, glm::value_ptr(specularColor));
-        glProgramUniform1f(_shaderProgramHandle, _shaderProgramUniformLocations.materialShininess, shininess);
-
-        CSCI441::drawSolidCylinder(0.5f, 0.5f, 0.2f, 16, 16);
-
-        for (int j = 0; j < numSpokes; ++j) {
-            glm::mat4 spokeMtx = wheelMtx;
-            spokeMtx = glm::rotate(spokeMtx, glm::radians(360.0f / numSpokes * j), CSCI441::Z_AXIS);
-            spokeMtx = glm::translate(spokeMtx, glm::vec3(0.0f, 0.0f, 0.25f));
-            spokeMtx = glm::scale(spokeMtx, glm::vec3(0.05f, 0.05f, 0.5f));
-
-            _computeAndSendMatrixUniforms(spokeMtx, viewMtx, projMtx);
-
-            CSCI441::drawSolidCube(1.0f);
-        }
-    }
-}
-
-void Ross::_drawCarPropeller(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx) const {
-    glm::mat4 propMtx = modelMtx;
-    propMtx = glm::translate(propMtx, _transProp);
-    propMtx = glm::rotate(propMtx, _propAngle, CSCI441::Z_AXIS);
-    propMtx = glm::scale(propMtx, _scaleProp);
-
-    _computeAndSendMatrixUniforms(propMtx, viewMtx, projMtx);
-
-    glm::vec3 ambientColor  = _colorProp * 0.2f;
-    glm::vec3 diffuseColor  = _colorProp;
+    glm::vec3 ambientColor  = _colorHead * 0.2f;
+    glm::vec3 diffuseColor  = _colorHead;
     glm::vec3 specularColor = glm::vec3(0.5f);
     float shininess         = 32.0f;
 
@@ -181,62 +111,81 @@ void Ross::_drawCarPropeller(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 pr
     glProgramUniform3fv(_shaderProgramHandle, _shaderProgramUniformLocations.materialSpecularColor, 1, glm::value_ptr(specularColor));
     glProgramUniform1f(_shaderProgramHandle, _shaderProgramUniformLocations.materialShininess, shininess);
 
-    CSCI441::drawSolidCube(1.0f);
+    CSCI441::drawSolidSphere(1.0f, 20, 20);
 }
 
-void Ross::_drawCarHeadlights(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx) {
-    glm::vec3 headlightColor;
+void Ross::_drawHat(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx) const {
+    glm::mat4 hatMtx = modelMtx;
+    hatMtx = glm::translate(hatMtx, _transHat);
+    hatMtx = glm::scale(hatMtx, _scaleHat);
 
-    if (_isMovingBackward) {
-        headlightColor = _headlightState ? _colorHeadlightOn : _colorHeadlightOff;
+    _computeAndSendMatrixUniforms(hatMtx, viewMtx, projMtx);
+
+    glm::vec3 ambientColor  = _colorHat * 0.2f;
+    glm::vec3 diffuseColor  = _colorHat;
+    glm::vec3 specularColor = glm::vec3(0.5f);
+    float shininess         = 32.0f;
+
+    glProgramUniform3fv(_shaderProgramHandle, _shaderProgramUniformLocations.materialAmbientColor, 1, glm::value_ptr(ambientColor));
+    glProgramUniform3fv(_shaderProgramHandle, _shaderProgramUniformLocations.materialDiffuseColor, 1, glm::value_ptr(diffuseColor));
+    glProgramUniform3fv(_shaderProgramHandle, _shaderProgramUniformLocations.materialSpecularColor, 1, glm::value_ptr(specularColor));
+    glProgramUniform1f(_shaderProgramHandle, _shaderProgramUniformLocations.materialShininess, shininess);
+
+    CSCI441::drawSolidCone(3.0f, 7.0f, 20, 20);
+}
+
+void Ross::_drawBeard(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx) const {
+    glm::mat4 beardMtx = modelMtx;
+    beardMtx = glm::translate(beardMtx, _transBeard);
+    beardMtx = glm::rotate(beardMtx, _angleBeard, CSCI441::X_AXIS);
+    beardMtx = glm::scale(beardMtx, _scaleBeard);
+
+    _computeAndSendMatrixUniforms(beardMtx, viewMtx, projMtx);
+
+    glm::vec3 ambientColor  = _colorBeard * 0.2f;
+    glm::vec3 diffuseColor  = _colorBeard;
+    glm::vec3 specularColor = glm::vec3(0.5f);
+    float shininess         = 32.0f;
+
+    glProgramUniform3fv(_shaderProgramHandle, _shaderProgramUniformLocations.materialAmbientColor, 1, glm::value_ptr(ambientColor));
+    glProgramUniform3fv(_shaderProgramHandle, _shaderProgramUniformLocations.materialDiffuseColor, 1, glm::value_ptr(diffuseColor));
+    glProgramUniform3fv(_shaderProgramHandle, _shaderProgramUniformLocations.materialSpecularColor, 1, glm::value_ptr(specularColor));
+    glProgramUniform1f(_shaderProgramHandle, _shaderProgramUniformLocations.materialShininess, shininess);
+
+    CSCI441::drawSolidCone(1.0f, 2.0f, 20, 20);
+}
+
+void Ross::_drawStaff(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx) const{
+    glm::mat4 staffMtx = modelMtx;
+    staffMtx = glm::translate(staffMtx, _transStaff);
+
+    if (isMovingForward) {
+        staffMtx = glm::rotate(staffMtx, _staffAngle, CSCI441::X_AXIS);
     } else {
-        headlightColor = _colorHeadlightReverse;
+
+        staffMtx = glm::rotate(staffMtx, _staffAngle, CSCI441::X_AXIS);
     }
 
-    for (int i = 0; i < 2; ++i) {
-        glm::mat4 lightMtx = modelMtx;
-        lightMtx = glm::translate(lightMtx, _headlightPositions[i]);
-        lightMtx = glm::scale(lightMtx, _scaleHeadlight);
-        _computeAndSendMatrixUniforms(lightMtx, viewMtx, projMtx);
+    staffMtx = glm::scale(staffMtx, _scaleStaff);
 
-        glm::vec3 ambientColor  = headlightColor * 0.2f;
-        glm::vec3 diffuseColor  = headlightColor;
-        glm::vec3 specularColor = glm::vec3(0.8f);
-        float shininess         = 64.0f;
+    _computeAndSendMatrixUniforms(staffMtx, viewMtx, projMtx);
 
-        glProgramUniform3fv(_shaderProgramHandle, _shaderProgramUniformLocations.materialAmbientColor, 1, glm::value_ptr(ambientColor));
-        glProgramUniform3fv(_shaderProgramHandle, _shaderProgramUniformLocations.materialDiffuseColor, 1, glm::value_ptr(diffuseColor));
-        glProgramUniform3fv(_shaderProgramHandle, _shaderProgramUniformLocations.materialSpecularColor, 1, glm::value_ptr(specularColor));
-        glProgramUniform1f(_shaderProgramHandle, _shaderProgramUniformLocations.materialShininess, shininess);
+    glm::vec3 ambientColor  = _colorStaff * 0.2f;
+    glm::vec3 diffuseColor  = _colorStaff;
+    glm::vec3 specularColor = glm::vec3(0.5f);
+    float shininess         = 32.0f;
 
-        CSCI441::drawSolidCube(1.0f);
-    }
+    glProgramUniform3fv(_shaderProgramHandle, _shaderProgramUniformLocations.materialAmbientColor, 1,
+                        glm::value_ptr(ambientColor));
+    glProgramUniform3fv(_shaderProgramHandle, _shaderProgramUniformLocations.materialDiffuseColor, 1,
+                        glm::value_ptr(diffuseColor));
+    glProgramUniform3fv(_shaderProgramHandle, _shaderProgramUniformLocations.materialSpecularColor, 1,
+                        glm::value_ptr(specularColor));
+    glProgramUniform1f(_shaderProgramHandle, _shaderProgramUniformLocations.materialShininess, shininess);
+
+    CSCI441::drawSolidCube(0.1f);
 }
 
-void Ross::_drawCarWindows(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx) const {
-    for (int i = 0; i < 2; ++i) {
-        glm::mat4 windowMtx = modelMtx;
-
-        windowMtx = glm::translate(windowMtx, _windowPositions[i]);
-
-        windowMtx = glm::scale(windowMtx, _scaleWindow);
-
-        _computeAndSendMatrixUniforms(windowMtx, viewMtx, projMtx);
-
-
-        glm::vec3 ambientColor  = _colorWindow * 0.2f;
-        glm::vec3 diffuseColor  = _colorWindow;
-        glm::vec3 specularColor = glm::vec3(0.3f);
-        float shininess         = 16.0f;
-
-        glProgramUniform3fv(_shaderProgramHandle, _shaderProgramUniformLocations.materialAmbientColor, 1, glm::value_ptr(ambientColor));
-        glProgramUniform3fv(_shaderProgramHandle, _shaderProgramUniformLocations.materialDiffuseColor, 1, glm::value_ptr(diffuseColor));
-        glProgramUniform3fv(_shaderProgramHandle, _shaderProgramUniformLocations.materialSpecularColor, 1, glm::value_ptr(specularColor));
-        glProgramUniform1f(_shaderProgramHandle, _shaderProgramUniformLocations.materialShininess, shininess);
-
-        CSCI441::drawSolidCube(1.0f);
-    }
-}
 
 void Ross::_computeAndSendMatrixUniforms(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx) const {
     glm::mat4 mvpMtx = projMtx * viewMtx * modelMtx;

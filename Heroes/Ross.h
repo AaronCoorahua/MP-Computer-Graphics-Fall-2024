@@ -10,19 +10,15 @@ class Ross {
 public:
     Ross(GLuint shaderProgramHandle, GLint mvpMtxUniformLocation, GLint normalMtxUniformLocation);
 
-    void drawVehicle( glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx );
+    void drawVehicle(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx);
 
     void moveForward();
     void moveBackward();
 
 private:
-
-    glm::vec3 _colorWindow;
-    glm::vec3 _scaleWindow;
-    glm::vec3 _windowPositions[2];
-
-    GLfloat _propAngle;
-    GLfloat _propAngleRotationSpeed;
+    float movementSpeed = 0.1f;
+    float rotationSpeed = glm::radians(5.0f);
+    bool isMovingForward = false;
 
     GLuint _shaderProgramHandle;
     struct ShaderProgramUniformLocations {
@@ -34,43 +30,44 @@ private:
         GLint materialShininess;
     } _shaderProgramUniformLocations;
 
+    // Wizard-specific variables
     glm::vec3 _colorBody;
     glm::vec3 _scaleBody;
 
-    glm::vec3 _colorTop;
-    glm::vec3 _scaleTop;
-    glm::vec3 _transTop;
+    glm::vec3 _colorHead;
+    glm::vec3 _scaleHead;
+    glm::vec3 _transHead;
 
-    glm::vec3 _colorWheel;
-    glm::vec3 _scaleWheel;
-    glm::vec3 _wheelPositions[4];
+    glm::vec3 _colorHat;
+    glm::vec3 _scaleHat;
+    glm::vec3 _transHat;
 
-    glm::vec3 _colorProp;
-    glm::vec3 _scaleProp;
-    glm::vec3 _transProp;
+    glm::vec3 _colorBeard;
+    glm::vec3 _scaleBeard;
+    glm::vec3 _transBeard;
+    float _angleBeard;
 
-    glm::vec3 _colorHeadlightOn;
-    glm::vec3 _colorHeadlightOff;
-    glm::vec3 _scaleHeadlight;
-    glm::vec3 _headlightPositions[2];
-    bool _headlightState;
-    GLfloat _headlightToggleTime;
-    glm::vec3 _colorHeadlightReverse;
-    bool _isMovingBackward;
+    glm::vec3 _colorStaff;
+    glm::vec3 _scaleStaff;
+    glm::vec3 _transStaff;
+    float _staffAngle;
 
+    // Position (if needed)
+    glm::vec3 position;
 
+    // Constants
     const GLfloat _PI = glm::pi<float>();
     const GLfloat _2PI = glm::two_pi<float>();
     const GLfloat _PI_OVER_2 = glm::half_pi<float>();
 
-    void _drawCarBody(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx ) const;
-    void _drawCarTop(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx ) const;
-    void _drawCarWheels(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx ) const;
-    void _drawCarPropeller(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx ) const;
-    void _drawCarHeadlights(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx );
-    void _drawCarWindows(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx ) const;
+    // Drawing functions
+    void _drawBody(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx) const;
+    void _drawHead(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx) const;
+    void _drawHat(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx) const;
+    void _drawBeard(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx) const;
+    void _drawStaff(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx) const;
 
     void _computeAndSendMatrixUniforms(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx) const;
 };
 
-#endif //ROSS
+#endif // Ross_h

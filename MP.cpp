@@ -285,7 +285,7 @@ void MP::mSetupScene() {
     _planePosition = glm::vec3(0.0f, 0.0f, 0.0f);
     _planeHeading = 0.0f;
 
-    _rossPosition = glm::vec3(5.0f, 0.0f, 0.0f);
+    _rossPosition = glm::vec3(5.0f, -1.3f, 0.0f);
     _rossHeading = 0.0f;
 
     _vyrmePosition = glm::vec3(10.0f, 0.0f, 0.0f);
