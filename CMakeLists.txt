@@ -3,7 +3,10 @@ project(A3)
 set(CMAKE_CXX_STANDARD 17)
 set(SOURCE_FILES main.cpp MP.cpp MP.h Heroes/Aaron_Inti.cpp Heroes/Aaron_Inti.h
         Cameras/Arcballcam.h
-        Cameras/Arcballcam.cpp Heroes/Byrne_Valorgorn.cpp Heroes/Byrne_Valorgorn.h)
+        Cameras/Arcballcam.cpp
+        Heroes/Ross.h
+        Heroes/Ross.cpp
+        Heroes/Vyrme_Balargon.cpp)
 add_executable(${PROJECT_NAME} ${SOURCE_FILES})
 
 # Windows with MinGW Installations

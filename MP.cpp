@@ -57,6 +57,18 @@ void MP::handleKeyEvent(GLint key, GLint action) {
             case GLFW_KEY_RIGHT_SHIFT:
                 _isShiftPressed = true;
             break;
+            case GLFW_KEY_Z:
+                _selectedCharacter = AARON_INTI;
+            _arcballCam->setLookAtPoint(_planePosition);
+            break;
+            case GLFW_KEY_X:
+                _selectedCharacter = ROSS;
+            _arcballCam->setLookAtPoint(_rossPosition);
+            break;
+            case GLFW_KEY_C:
+                _selectedCharacter = VYRME;
+            _arcballCam->setLookAtPoint(_vyrmePosition);
+            break;
             default:
                 break;
         }
@@ -66,6 +78,7 @@ void MP::handleKeyEvent(GLint key, GLint action) {
         }
     }
 }
+
 
 
 
@@ -165,6 +178,15 @@ void MP::mSetupBuffers() {
                               _lightingShaderUniformLocations.mvpMatrix,
                               _lightingShaderUniformLocations.normalMatrix);
 
+    _rossHero = new Ross(_lightingShaderProgram->getShaderProgramHandle(),
+                         _lightingShaderUniformLocations.mvpMatrix,
+                         _lightingShaderUniformLocations.normalMatrix);
+
+    _vyrmeHero = new Vyrme(_lightingShaderProgram->getShaderProgramHandle(),
+                           _lightingShaderUniformLocations.mvpMatrix,
+                           _lightingShaderUniformLocations.normalMatrix);
+
+
     _createGroundBuffers();
     _generateEnvironment();
 }
@@ -254,6 +276,7 @@ void MP::_generateEnvironment() {
 }
 
 void MP::mSetupScene() {
+    _selectedCharacter = AARON_INTI;
     _arcballCam->setCameraView(
         glm::vec3(0.0f, 50.0f, 100.0f), // Eye position
         glm::vec3(0.0f, 0.0f, 0.0f),    // Look-at point (plane position)
@@ -261,6 +284,12 @@ void MP::mSetupScene() {
     );
     _planePosition = glm::vec3(0.0f, 0.0f, 0.0f);
     _planeHeading = 0.0f;
+
+    _rossPosition = glm::vec3(5.0f, 0.0f, 0.0f);
+    _rossHeading = 0.0f;
+
+    _vyrmePosition = glm::vec3(10.0f, 0.0f, 0.0f);
+    _vyrmeHeading = 0.0f;
 
     // Set up the projection matrix
     int width, height;
@@ -313,6 +342,8 @@ void MP::mCleanupBuffers() {
 
     fprintf( stdout, "[INFO]: ...deleting models..\n" );
     delete _pPlane;
+    delete _rossHero;
+    delete _vyrmeHero;
 }
 
 //*************************************************************************************
@@ -443,68 +474,179 @@ void MP::_renderScene(glm::mat4 viewMtx, glm::mat4 projMtx) const {
     modelMtx = glm::rotate(modelMtx, _planeHeading, CSCI441::Y_AXIS);
     _pPlane->drawVehicle(modelMtx, viewMtx, projMtx );
     //// END DRAWING THE CAR ////
+
+
+    //// BEGIN DRAWING ROSS ////
+    glm::vec3 RossAmbientColor = glm::vec3(0.1f, 0.0f, 0.0f);
+    glm::vec3 RossDiffuseColor = glm::vec3(0.7f, 0.0f, 0.0f); // Red color
+    glm::vec3 RossSpecularColor = glm::vec3(1.0f, 1.0f, 1.0f);
+    float RossShininess = 32.0f;
+
+    _lightingShaderProgram->setProgramUniform(_lightingShaderUniformLocations.materialAmbientColor, RossAmbientColor);
+    _lightingShaderProgram->setProgramUniform(_lightingShaderUniformLocations.materialDiffuseColor, RossDiffuseColor);
+    _lightingShaderProgram->setProgramUniform(_lightingShaderUniformLocations.materialSpecularColor, RossSpecularColor);
+    _lightingShaderProgram->setProgramUniform(_lightingShaderUniformLocations.materialShininess, RossShininess);
+    glm::mat4 modelRossMtx(1.0f);
+    modelRossMtx = glm::translate(modelRossMtx, _rossPosition);
+    modelRossMtx = glm::translate(modelRossMtx, glm::vec3(0.0f, 1.3, 0.0f));
+    modelRossMtx = glm::rotate(modelRossMtx, _rossHeading, CSCI441::Y_AXIS);
+    _rossHero->drawVehicle(modelRossMtx, viewMtx, projMtx );
+    //// END DRAWING ROSS ////
+
+    //// BEGIN DRAWING VYRME ////
+    glm::vec3 VyrmeAmbientColor = glm::vec3(0.1f, 0.0f, 0.0f);
+    glm::vec3 VyrmeDiffuseColor = glm::vec3(0.7f, 0.0f, 0.0f); // Red color
+    glm::vec3 VyrmeSpecularColor = glm::vec3(1.0f, 1.0f, 1.0f);
+    float VyrmeShininess = 32.0f;
+
+    _lightingShaderProgram->setProgramUniform(_lightingShaderUniformLocations.materialAmbientColor, VyrmeAmbientColor);
+    _lightingShaderProgram->setProgramUniform(_lightingShaderUniformLocations.materialDiffuseColor, VyrmeDiffuseColor);
+    _lightingShaderProgram->setProgramUniform(_lightingShaderUniformLocations.materialSpecularColor, VyrmeSpecularColor);
+    _lightingShaderProgram->setProgramUniform(_lightingShaderUniformLocations.materialShininess, VyrmeShininess);
+    glm::mat4 modelVyrmeMtx(1.0f);
+    modelVyrmeMtx = glm::translate(modelVyrmeMtx, _vyrmePosition);
+    modelVyrmeMtx = glm::translate(modelVyrmeMtx, glm::vec3(0.0f, 1.3, 0.0f));
+    modelVyrmeMtx = glm::rotate(modelVyrmeMtx, _vyrmeHeading, CSCI441::Y_AXIS);
+    _vyrmeHero->drawVehicle(modelVyrmeMtx, viewMtx, projMtx );
+    //// END DRAWING VYRME ////
 }
 
 void MP::_updateScene() {
     float moveSpeed = 0.08f;
     float rotateSpeed = glm::radians(1.5f);
 
-    const float MIN_X = -WORLD_SIZE+3;
-    const float MAX_X = WORLD_SIZE-3;
-    const float MIN_Z = -WORLD_SIZE+3;
-    const float MAX_Z = WORLD_SIZE-3;
+    const float MIN_X = -WORLD_SIZE + 3;
+    const float MAX_X = WORLD_SIZE - 3;
+    const float MIN_Z = -WORLD_SIZE + 3;
+    const float MAX_Z = WORLD_SIZE - 3;
 
-    glm::vec3 direction(0.0f);
+    switch (_selectedCharacter) {
+        case AARON_INTI: {
+            if (_keys[GLFW_KEY_W]) {
+                glm::vec3 direction(
+                    sinf(_planeHeading),
+                    0.0f,
+                    cosf(_planeHeading)
+                );
+                glm::vec3 newPosition = _planePosition - direction * moveSpeed;
+                newPosition.x = std::max(MIN_X, std::min(newPosition.x, MAX_X));
+                newPosition.z = std::max(MIN_Z, std::min(newPosition.z, MAX_Z));
+                _planePosition = newPosition;
+                _pPlane->moveBackward();
+            }
+            if (_keys[GLFW_KEY_S]) {
+                glm::vec3 direction(
+                    sinf(_planeHeading),
+                    0.0f,
+                    cosf(_planeHeading)
+                );
+                glm::vec3 newPosition = _planePosition + direction * moveSpeed;
+                newPosition.x = std::max(MIN_X, std::min(newPosition.x, MAX_X));
+                newPosition.z = std::max(MIN_Z, std::min(newPosition.z, MAX_Z));
+                _planePosition = newPosition;
+                _pPlane->moveForward();
+            }
+            if (_keys[GLFW_KEY_A]) {
+                _planeHeading += rotateSpeed;
+            }
+            if (_keys[GLFW_KEY_D]) {
+                _planeHeading -= rotateSpeed;
+            }
 
-    // Car movement
-    if (_keys[GLFW_KEY_S]) {
-        glm::vec3 direction(
-            sinf(_planeHeading),
-            0.0f,
-            cosf(_planeHeading)
-        );
+            if (_planeHeading > glm::two_pi<float>())
+                _planeHeading -= glm::two_pi<float>();
+            else if (_planeHeading < 0.0f)
+                _planeHeading += glm::two_pi<float>();
 
-        glm::vec3 newPosition = _planePosition + direction * moveSpeed;
+            _arcballCam->setLookAtPoint(_planePosition);
+            break;
+        }
 
-        newPosition.x = std::max(MIN_X, std::min(newPosition.x, MAX_X));
-        newPosition.z = std::max(MIN_Z, std::min(newPosition.z, MAX_Z));
+        case ROSS: {
+            if (_keys[GLFW_KEY_W]) {
+                glm::vec3 direction(
+                    sinf(_rossHeading),
+                    0.0f,
+                    cosf(_rossHeading)
+                );
+                glm::vec3 newPosition = _rossPosition - direction * moveSpeed;
+                newPosition.x = std::max(MIN_X, std::min(newPosition.x, MAX_X));
+                newPosition.z = std::max(MIN_Z, std::min(newPosition.z, MAX_Z));
+                _rossPosition = newPosition;
+                _rossHero->moveForward();
+            }
+            if (_keys[GLFW_KEY_S]) {
+                glm::vec3 direction(
+                    sinf(_rossHeading),
+                    0.0f,
+                    cosf(_rossHeading)
+                );
+                glm::vec3 newPosition = _rossPosition + direction * moveSpeed;
+                newPosition.x = std::max(MIN_X, std::min(newPosition.x, MAX_X));
+                newPosition.z = std::max(MIN_Z, std::min(newPosition.z, MAX_Z));
+                _rossPosition = newPosition;
+                _rossHero->moveBackward();
+            }
+            if (_keys[GLFW_KEY_A]) {
+                _rossHeading += rotateSpeed;
+            }
+            if (_keys[GLFW_KEY_D]) {
+                _rossHeading -= rotateSpeed;
+            }
 
-        _planePosition = newPosition;
-        _pPlane->moveForward();
+            if (_rossHeading > glm::two_pi<float>())
+                _rossHeading -= glm::two_pi<float>();
+            else if (_rossHeading < 0.0f)
+                _rossHeading += glm::two_pi<float>();
+
+            _arcballCam->setLookAtPoint(_rossPosition);
+            break;
+        }
+
+        case VYRME: {
+            if (_keys[GLFW_KEY_W]) {
+                glm::vec3 direction(
+                    sinf(_vyrmeHeading),
+                    0.0f,
+                    cosf(_vyrmeHeading)
+                );
+                glm::vec3 newPosition = _vyrmePosition - direction * moveSpeed;
+                newPosition.x = std::max(MIN_X, std::min(newPosition.x, MAX_X));
+                newPosition.z = std::max(MIN_Z, std::min(newPosition.z, MAX_Z));
+                _vyrmePosition = newPosition;
+                _vyrmeHero->moveForward();
+            }
+            if (_keys[GLFW_KEY_S]) {
+                glm::vec3 direction(
+                    sinf(_vyrmeHeading),
+                    0.0f,
+                    cosf(_vyrmeHeading)
+                );
+                glm::vec3 newPosition = _vyrmePosition + direction * moveSpeed;
+                newPosition.x = std::max(MIN_X, std::min(newPosition.x, MAX_X));
+                newPosition.z = std::max(MIN_Z, std::min(newPosition.z, MAX_Z));
+                _vyrmePosition = newPosition;
+                _vyrmeHero->moveBackward();
+            }
+            if (_keys[GLFW_KEY_A]) {
+                _vyrmeHeading += rotateSpeed;
+            }
+            if (_keys[GLFW_KEY_D]) {
+                _vyrmeHeading -= rotateSpeed;
+            }
+
+            if (_vyrmeHeading > glm::two_pi<float>())
+                _vyrmeHeading -= glm::two_pi<float>();
+            else if (_vyrmeHeading < 0.0f)
+                _vyrmeHeading += glm::two_pi<float>();
+
+            _arcballCam->setLookAtPoint(_vyrmePosition);
+            break;
+        }
+
+        default:
+            break;
     }
-    if (_keys[GLFW_KEY_W]) {
-        // Move backward along heading
-        glm::vec3 direction(
-            sinf(_planeHeading),
-            0.0f,
-            cosf(_planeHeading)
-        );
-        glm::vec3 newPosition = _planePosition - direction * moveSpeed;
-
-        newPosition.x = std::max(MIN_X, std::min(newPosition.x, MAX_X));
-        newPosition.z = std::max(MIN_Z, std::min(newPosition.z, MAX_Z));
-
-        _planePosition = newPosition;
-        _pPlane->moveBackward();
-    }
-    if (_keys[GLFW_KEY_A]) {
-        // Turn left
-        _planeHeading += rotateSpeed;
-    }
-    if (_keys[GLFW_KEY_D]) {
-        // Turn right
-        _planeHeading -= rotateSpeed;
-    }
-
-    // Keep heading
-    if (_planeHeading > glm::two_pi<float>())
-        _planeHeading -= glm::two_pi<float>();
-    else if (_planeHeading < 0.0f)
-        _planeHeading += glm::two_pi<float>();
-
-    // Update camera to center around car
-    _arcballCam->setLookAtPoint(_planePosition);
-
 }
 
 void MP::run() {

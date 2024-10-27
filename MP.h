@@ -6,6 +6,8 @@
 #include <ShaderProgram.hpp>
 
 #include "Heroes/Aaron_Inti.h"
+#include "Heroes/Ross.h"
+#include "Heroes/Vyrme_Balargon.h"
 
 #include <vector>
 
@@ -35,9 +37,21 @@ public:
     static constexpr GLfloat MOUSE_UNINITIALIZED = -9999.0f;
 
 private:
+    //CHARACTERS
+
+    enum Character { AARON_INTI, ROSS, VYRME };
+    Character _selectedCharacter;
+
+    //INTI
     glm::mat4 _projectionMatrix;
     glm::vec3 _planePosition;
     float _planeHeading;
+    //ROSS
+    glm::vec3 _rossPosition;
+    float _rossHeading;
+    //VYRME
+    glm::vec3 _vyrmePosition;
+    float _vyrmeHeading;
 
     void mSetupGLFW() final;
     void mSetupOpenGL() final;
@@ -72,8 +86,10 @@ private:
     /// \brief x = forward/backward delta, y = rotational delta
     glm::vec2 _cameraSpeed;
 
-    /// \desc our plane model
+    /// \desc our heroes
     Aaron_Inti* _pPlane;
+    Ross* _rossHero;
+    Vyrme* _vyrmeHero;
 
     /// \desc the size of the world (controls the ground size and locations of buildings)
     static constexpr GLfloat WORLD_SIZE = 55.0f;
