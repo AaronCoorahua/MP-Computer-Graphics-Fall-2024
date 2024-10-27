@@ -558,7 +558,10 @@ void MP::_updateScene() {
             else if (_planeHeading < 0.0f)
                 _planeHeading += glm::two_pi<float>();
 
-            _arcballCam->setLookAtPoint(_planePosition);
+            float Y_OFFSET = 1.0f;
+            glm::vec3 intiLookAtPoint = _planePosition;
+            intiLookAtPoint.y += Y_OFFSET;
+            _arcballCam->setLookAtPoint(intiLookAtPoint);
             break;
         }
 
@@ -598,8 +601,10 @@ void MP::_updateScene() {
                 _rossHeading -= glm::two_pi<float>();
             else if (_rossHeading < 0.0f)
                 _rossHeading += glm::two_pi<float>();
-
-            _arcballCam->setLookAtPoint(_rossPosition);
+            float Y_OFFSET = 3.0f;
+            glm::vec3 rossLookAtPoint = _rossPosition;
+            rossLookAtPoint.y += Y_OFFSET;
+            _arcballCam->setLookAtPoint(rossLookAtPoint);
             break;
         }
 

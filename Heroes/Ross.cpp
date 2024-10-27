@@ -31,8 +31,8 @@ Ross::Ross(GLuint shaderProgramHandle, GLint mvpMtxUniformLocation, GLint normal
 
     _colorBeard = glm::vec3(1.0f, 1.0f, 1.0f);          // White color for the beard
     _scaleBeard = glm::vec3(0.03f, 0.03f, 0.03f);
-    _transBeard = glm::vec3(0.00f, 0.19f, 0.0f);
-    _angleBeard = glm::radians(-135.0f);
+    _transBeard = glm::vec3(0.00f, 0.19f, -0.01f);
+    _angleBeard = glm::radians(-150.0f);
 
     _colorStaff = glm::vec3(0.54f, 0.46f, 0.37f);       // Brown color for the staff
     _scaleStaff = glm::vec3(0.08f, 1.9f, 0.08f);
@@ -69,7 +69,7 @@ void Ross::moveBackward() {
     isMovingForward = false;
     position.z += movementSpeed;
 
-    _staffAngle -= rotationSpeed;
+    _staffAngle += rotationSpeed;
     if (_staffAngle > glm::two_pi<float>()) {
         _staffAngle -= glm::two_pi<float>();
     }
