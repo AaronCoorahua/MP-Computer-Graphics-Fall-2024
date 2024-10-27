@@ -1,4 +1,4 @@
-#include "Ross.h"
+#include "Vyrme_Balargon.h"
 
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -6,7 +6,7 @@
 #include <objects.hpp>
 #include <OpenGLUtils.hpp>
 
-Ross::Ross(GLuint shaderProgramHandle, GLint mvpMtxUniformLocation, GLint normalMtxUniformLocation)
+Vyrme::Vyrme(GLuint shaderProgramHandle, GLint mvpMtxUniformLocation, GLint normalMtxUniformLocation)
     : _shaderProgramHandle(shaderProgramHandle) {
     _propAngle = 0.0f;
     _propAngleRotationSpeed = _PI / 16.0f;
@@ -55,7 +55,7 @@ Ross::Ross(GLuint shaderProgramHandle, GLint mvpMtxUniformLocation, GLint normal
     _isMovingBackward = false;
 }
 
-void Ross::drawVehicle(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx) {
+void Vyrme::drawVehicle(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx) {
     _drawCarBody(modelMtx, viewMtx, projMtx);
     _drawCarTop(modelMtx, viewMtx, projMtx);
     _drawCarWindows(modelMtx, viewMtx, projMtx);
@@ -64,7 +64,7 @@ void Ross::drawVehicle(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx)
     _drawCarHeadlights(modelMtx, viewMtx, projMtx);
 }
 
-void Ross::moveForward() {
+void Vyrme::moveForward() {
     _isMovingBackward = false;
     _propAngle += _propAngleRotationSpeed;
     if (_propAngle > _2PI) _propAngle -= _2PI;
@@ -76,7 +76,7 @@ void Ross::moveForward() {
     }
 }
 
-void Ross::moveBackward() {
+void Vyrme::moveBackward() {
     _isMovingBackward = true;
     _propAngle -= _propAngleRotationSpeed;
     if (_propAngle < 0.0f) _propAngle += _2PI;
@@ -88,7 +88,7 @@ void Ross::moveBackward() {
     }
 }
 
-void Ross::_drawCarBody(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx) const {
+void Vyrme::_drawCarBody(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx) const {
     glm::mat4 bodyMtx = modelMtx;
     bodyMtx = glm::scale(bodyMtx, _scaleBody);
 
@@ -107,7 +107,7 @@ void Ross::_drawCarBody(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx
     CSCI441::drawSolidCube(1.0f);
 }
 
-void Ross::_drawCarTop(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx) const {
+void Vyrme::_drawCarTop(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx) const {
     glm::mat4 topMtx = modelMtx;
     topMtx = glm::translate(topMtx, _transTop);
     topMtx = glm::scale(topMtx, _scaleTop);
@@ -127,7 +127,7 @@ void Ross::_drawCarTop(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx)
     CSCI441::drawSolidCube(1.0f);
 }
 
-void Ross::_drawCarWheels(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx) const {
+void Vyrme::_drawCarWheels(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx) const {
     int numSpokes = 8;
     for (int i = 0; i < 4; ++i) {
         glm::mat4 wheelMtx = modelMtx;
@@ -163,7 +163,7 @@ void Ross::_drawCarWheels(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projM
     }
 }
 
-void Ross::_drawCarPropeller(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx) const {
+void Vyrme::_drawCarPropeller(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx) const {
     glm::mat4 propMtx = modelMtx;
     propMtx = glm::translate(propMtx, _transProp);
     propMtx = glm::rotate(propMtx, _propAngle, CSCI441::Z_AXIS);
@@ -184,7 +184,7 @@ void Ross::_drawCarPropeller(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 pr
     CSCI441::drawSolidCube(1.0f);
 }
 
-void Ross::_drawCarHeadlights(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx) {
+void Vyrme::_drawCarHeadlights(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx) {
     glm::vec3 headlightColor;
 
     if (_isMovingBackward) {
@@ -213,7 +213,7 @@ void Ross::_drawCarHeadlights(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 p
     }
 }
 
-void Ross::_drawCarWindows(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx) const {
+void Vyrme::_drawCarWindows(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx) const {
     for (int i = 0; i < 2; ++i) {
         glm::mat4 windowMtx = modelMtx;
 
@@ -238,7 +238,7 @@ void Ross::_drawCarWindows(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 proj
     }
 }
 
-void Ross::_computeAndSendMatrixUniforms(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx) const {
+void Vyrme::_computeAndSendMatrixUniforms(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx) const {
     glm::mat4 mvpMtx = projMtx * viewMtx * modelMtx;
     glProgramUniformMatrix4fv(_shaderProgramHandle, _shaderProgramUniformLocations.mvpMtx, 1, GL_FALSE, glm::value_ptr(mvpMtx));
 

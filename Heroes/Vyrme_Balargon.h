@@ -1,14 +1,14 @@
-#ifndef Ross_h
-#define Ross_h
+#ifndef Vyrme_Balargon
+#define Vyrme_Balargon
 
 #include <glad/gl.h>
 
 #include <glm/glm.hpp>
 #include <glm/gtc/constants.hpp>
 
-class Ross {
+class Vyrme {
 public:
-    Ross(GLuint shaderProgramHandle, GLint mvpMtxUniformLocation, GLint normalMtxUniformLocation);
+    Vyrme(GLuint shaderProgramHandle, GLint mvpMtxUniformLocation, GLint normalMtxUniformLocation);
 
     void drawVehicle( glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx );
 
@@ -73,4 +73,4 @@ private:
     void _computeAndSendMatrixUniforms(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx) const;
 };
 
-#endif //ROSS
+#endif //Vyrme_Balargon
