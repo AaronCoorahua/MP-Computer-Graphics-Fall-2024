@@ -181,6 +181,8 @@ private:
     void _updateIntiFirstPersonCamera();
     void _updateRossFirstPersonCamera();
     void _updateVyrmeFirstPersonCamera();
+
+    bool _isSmallViewportActive;
 };
 
 void A3_engine_keyboard_callback(GLFWwindow *window, int key, int scancode, int action, int mods );

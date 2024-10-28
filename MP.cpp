@@ -31,7 +31,8 @@ MP::MP()
                                 _isShiftPressed(false),
                                 _isLeftMouseButtonPressed(false),
                                 _isZooming(false),
-                                _currentCameraMode(ARCBALL){
+                                _currentCameraMode(ARCBALL),
+                                _isSmallViewportActive(false){
 
     for(auto& _key : _keys) _key = GL_FALSE;
     _mousePosition = glm::vec2(MOUSE_UNINITIALIZED, MOUSE_UNINITIALIZED );
@@ -42,6 +43,8 @@ MP::MP()
     _intiFirstPersonCam = new CSCI441::FreeCam();
     _rossFirstPersonCam = new CSCI441::FreeCam();
     _vyrmeFirstPersonCam = new CSCI441::FreeCam();
+
+
 }
 
 MP::~MP() {
@@ -62,37 +65,36 @@ void MP::handleKeyEvent(GLint key, GLint action) {
             case GLFW_KEY_Q:
             case GLFW_KEY_ESCAPE:
                 setWindowShouldClose();
-                break;
+            break;
             case GLFW_KEY_LEFT_SHIFT:
             case GLFW_KEY_RIGHT_SHIFT:
                 _isShiftPressed = true;
-                break;
+            break;
             case GLFW_KEY_Z:
                 _selectedCharacter = AARON_INTI;
-                _currentCameraMode = ARCBALL;
-                _arcballCam->setLookAtPoint(_planePosition);
-                break;
+            _currentCameraMode = ARCBALL;
+            _arcballCam->setLookAtPoint(_planePosition);
+            break;
             case GLFW_KEY_X:
                 _selectedCharacter = ROSS;
-                _currentCameraMode = ARCBALL;
-                _arcballCam->setLookAtPoint(_rossPosition);
-                break;
+            _currentCameraMode = ARCBALL;
+            _arcballCam->setLookAtPoint(_rossPosition);
+            break;
             case GLFW_KEY_C:
                 _selectedCharacter = VYRME;
-                _currentCameraMode = ARCBALL;
-                _arcballCam->setLookAtPoint(_vyrmePosition);
-                break;
-            case GLFW_KEY_1:
-                _currentCameraMode = FIRST_PERSON_CAM;
+            _currentCameraMode = ARCBALL;
+            _arcballCam->setLookAtPoint(_vyrmePosition);
             break;
-
+            case GLFW_KEY_1:
+                    _isSmallViewportActive = !_isSmallViewportActive;
+            break;
             case GLFW_KEY_2:
                 _currentCameraMode = FREE_CAM;
-                _freeCam->setPosition(glm::vec3(0.0f, 40.0f, 60.0f));
-                _freeCam->setTheta(glm::radians(0.0f));
-                _freeCam->setPhi(glm::radians(60.0f));
-                _freeCam->recomputeOrientation();
-                break;
+            _freeCam->setPosition(glm::vec3(0.0f, 40.0f, 60.0f));
+            _freeCam->setTheta(glm::radians(0.0f));
+            _freeCam->setPhi(glm::radians(60.0f));
+            _freeCam->recomputeOrientation();
+            break;
             default:
                 break;
         }
@@ -708,23 +710,19 @@ void MP::_updateScene() {
 }
 
 void MP::run() {
-    // Establecer el puntero de usuario para los callbacks
     glfwSetWindowUserPointer(mpWindow, this);
 
     while (!glfwWindowShouldClose(mpWindow)) {
         glDrawBuffer(GL_BACK);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        // Obtener el tamaño del framebuffer
         GLint framebufferWidth, framebufferHeight;
         glfwGetFramebufferSize(mpWindow, &framebufferWidth, &framebufferHeight);
 
-        // Actualizar el viewport para la escena principal
         glViewport(0, 0, framebufferWidth, framebufferHeight);
         float aspectRatio = static_cast<float>(framebufferWidth) / static_cast<float>(framebufferHeight);
         _projectionMatrix = glm::perspective(glm::radians(45.0f), aspectRatio, 0.1f, 1000.0f);
 
-        // Determinar la matriz de vista y posición de la cámara según el modo actual
         glm::mat4 viewMatrix;
         glm::vec3 eyePosition;
 
@@ -735,7 +733,6 @@ void MP::run() {
             viewMatrix = _freeCam->getViewMatrix();
             eyePosition = _freeCam->getPosition();
         } else if (_currentCameraMode == FIRST_PERSON_CAM) {
-            // Seleccionar la cámara en primera persona según el personaje seleccionado
             switch (_selectedCharacter) {
                 case AARON_INTI:
                     viewMatrix = _intiFirstPersonCam->getViewMatrix();
@@ -750,74 +747,65 @@ void MP::run() {
                     eyePosition = _vyrmeFirstPersonCam->getPosition();
                     break;
                 default:
-                    // Si no se selecciona ningún personaje, usar la cámara Arcball por defecto
                     viewMatrix = _arcballCam->getViewMatrix();
                     eyePosition = _arcballCam->getPosition();
                     break;
             }
         }
 
-        // Dibujar la escena principal
         _renderScene(viewMatrix, _projectionMatrix, eyePosition);
 
-        // Guardar el viewport previo
-        GLint prevViewport[4];
-        glGetIntegerv(GL_VIEWPORT, prevViewport);
+        if (_isSmallViewportActive) {
+            GLint prevViewport[4];
+            glGetIntegerv(GL_VIEWPORT, prevViewport);
 
-        // Limpiar el buffer de profundidad antes de renderizar el segundo viewport
-        glClear(GL_DEPTH_BUFFER_BIT);
+            glClear(GL_DEPTH_BUFFER_BIT);
 
-        // Configurar el nuevo viewport en la esquina superior derecha
-        GLint smallViewportWidth = framebufferWidth / 3;
-        GLint smallViewportHeight = framebufferHeight / 3;
-        GLint smallViewportX = framebufferWidth - smallViewportWidth - 10; // Desplazamiento desde el borde derecho
-        GLint smallViewportY = framebufferHeight - smallViewportHeight - 10; // Desplazamiento desde el borde inferior
+            GLint smallViewportWidth = framebufferWidth / 3;
+            GLint smallViewportHeight = framebufferHeight / 3;
+            GLint smallViewportX = framebufferWidth - smallViewportWidth - 10; // Desplazamiento desde el borde derecho
+            GLint smallViewportY = framebufferHeight - smallViewportHeight - 10; // Desplazamiento desde el borde inferior
 
-        glViewport(smallViewportX, smallViewportY, smallViewportWidth, smallViewportHeight);
+            glViewport(smallViewportX, smallViewportY, smallViewportWidth, smallViewportHeight);
 
-        // Calcular la relación de aspecto para el pequeño viewport
-        float smallAspectRatio = static_cast<float>(smallViewportWidth) / static_cast<float>(smallViewportHeight);
+            float smallAspectRatio = static_cast<float>(smallViewportWidth) / static_cast<float>(smallViewportHeight);
 
-        // Recalcular la matriz de proyección para el pequeño viewport
-        glm::mat4 smallProjectionMatrix = glm::perspective(glm::radians(45.0f), smallAspectRatio, 0.1f, 1000.0f);
+            glm::mat4 smallProjectionMatrix = glm::perspective(glm::radians(45.0f), smallAspectRatio, 0.1f, 1000.0f);
 
-        // Para el pequeño viewport, usaremos la cámara en primera persona del personaje seleccionado
-        glm::mat4 fpViewMatrix;
-        glm::vec3 fpEyePosition;
+            glm::mat4 fpViewMatrix;
+            glm::vec3 fpEyePosition;
 
-        switch (_selectedCharacter) {
-            case AARON_INTI:
-                fpViewMatrix = _intiFirstPersonCam->getViewMatrix();
-                fpEyePosition = _intiFirstPersonCam->getPosition();
-                break;
-            case ROSS:
-                fpViewMatrix = _rossFirstPersonCam->getViewMatrix();
-                fpEyePosition = _rossFirstPersonCam->getPosition();
-                break;
-            case VYRME:
-                fpViewMatrix = _vyrmeFirstPersonCam->getViewMatrix();
-                fpEyePosition = _vyrmeFirstPersonCam->getPosition();
-                break;
-            default:
-                // Si no se selecciona ningún personaje, usar la cámara Arcball por defecto
-                fpViewMatrix = _arcballCam->getViewMatrix();
-                fpEyePosition = _arcballCam->getPosition();
-                break;
+            switch (_selectedCharacter) {
+                case AARON_INTI:
+                    fpViewMatrix = _intiFirstPersonCam->getViewMatrix();
+                    fpEyePosition = _intiFirstPersonCam->getPosition();
+                    break;
+                case ROSS:
+                    fpViewMatrix = _rossFirstPersonCam->getViewMatrix();
+                    fpEyePosition = _rossFirstPersonCam->getPosition();
+                    break;
+                case VYRME:
+                    fpViewMatrix = _vyrmeFirstPersonCam->getViewMatrix();
+                    fpEyePosition = _vyrmeFirstPersonCam->getPosition();
+                    break;
+                default:
+                    fpViewMatrix = _arcballCam->getViewMatrix();
+                    fpEyePosition = _arcballCam->getPosition();
+                    break;
+            }
+
+            _renderScene(fpViewMatrix, smallProjectionMatrix, fpEyePosition);
+
+            glViewport(prevViewport[0], prevViewport[1], prevViewport[2], prevViewport[3]);
         }
 
-        // Dibujar la escena con la cámara en primera persona en el pequeño viewport
-        _renderScene(fpViewMatrix, smallProjectionMatrix, fpEyePosition);
-
-        // Restaurar el viewport previo
-        glViewport(prevViewport[0], prevViewport[1], prevViewport[2], prevViewport[3]);
-
-        // Actualizar la escena (manejar el movimiento)
         _updateScene();
 
         glfwSwapBuffers(mpWindow);
         glfwPollEvents();
     }
 }
+
 
 
 
