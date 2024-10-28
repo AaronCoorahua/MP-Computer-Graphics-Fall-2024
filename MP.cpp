@@ -38,13 +38,18 @@ MP::MP()
     _leftMouseButtonState = GLFW_RELEASE;
     _arcballCam = new ArcballCam();
     _freeCam = new CSCI441::FreeCam();
-    _firstPersonCam = new CSCI441::FreeCam();
+
+    _intiFirstPersonCam = new CSCI441::FreeCam();
+    _rossFirstPersonCam = new CSCI441::FreeCam();
+    _vyrmeFirstPersonCam = new CSCI441::FreeCam();
 }
 
 MP::~MP() {
     delete _arcballCam;
     delete _freeCam;
-    delete _firstPersonCam;
+    delete _intiFirstPersonCam;
+    delete _rossFirstPersonCam;
+    delete _vyrmeFirstPersonCam;
 }
 
 
@@ -600,7 +605,7 @@ void MP::_updateScene() {
                 glm::vec3 intiLookAtPoint = _planePosition;
                 intiLookAtPoint.y += Y_OFFSET;
                 _arcballCam->setLookAtPoint(intiLookAtPoint);
-                _updateFirstPersonCamera();
+                _updateIntiFirstPersonCamera();
                 break;
             }
 
@@ -645,6 +650,8 @@ void MP::_updateScene() {
                 glm::vec3 rossLookAtPoint = _rossPosition;
                 rossLookAtPoint.y += Y_OFFSET;
                 _arcballCam->setLookAtPoint(rossLookAtPoint);
+
+                _updateRossFirstPersonCamera();
                 break;
             }
 
@@ -689,6 +696,8 @@ void MP::_updateScene() {
                 glm::vec3 vyrmeLookAtPoint = _vyrmePosition;
                 vyrmeLookAtPoint.y += Y_OFFSET;
                 _arcballCam->setLookAtPoint(vyrmeLookAtPoint);
+
+                _updateVyrmeFirstPersonCamera();
                 break;
             }
 
@@ -699,25 +708,26 @@ void MP::_updateScene() {
 }
 
 void MP::run() {
-    // Set the user pointer for callbacks
+    // Establecer el puntero de usuario para los callbacks
     glfwSetWindowUserPointer(mpWindow, this);
 
-    while( !glfwWindowShouldClose(mpWindow) ) {
-        glDrawBuffer( GL_BACK );
-        glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+    while (!glfwWindowShouldClose(mpWindow)) {
+        glDrawBuffer(GL_BACK);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        // Get the size of our framebuffer.
+        // Obtener el tamaño del framebuffer
         GLint framebufferWidth, framebufferHeight;
         glfwGetFramebufferSize(mpWindow, &framebufferWidth, &framebufferHeight);
 
-        // Update the viewport for the main scene
+        // Actualizar el viewport para la escena principal
         glViewport(0, 0, framebufferWidth, framebufferHeight);
         float aspectRatio = static_cast<float>(framebufferWidth) / static_cast<float>(framebufferHeight);
         _projectionMatrix = glm::perspective(glm::radians(45.0f), aspectRatio, 0.1f, 1000.0f);
 
-        // Determine the view matrix based on the current camera mode
+        // Determinar la matriz de vista y posición de la cámara según el modo actual
         glm::mat4 viewMatrix;
         glm::vec3 eyePosition;
+
         if (_currentCameraMode == ARCBALL) {
             viewMatrix = _arcballCam->getViewMatrix();
             eyePosition = _arcballCam->getPosition();
@@ -725,45 +735,83 @@ void MP::run() {
             viewMatrix = _freeCam->getViewMatrix();
             eyePosition = _freeCam->getPosition();
         } else if (_currentCameraMode == FIRST_PERSON_CAM) {
-            viewMatrix = _firstPersonCam->getViewMatrix();
-            eyePosition = _firstPersonCam->getPosition();
+            // Seleccionar la cámara en primera persona según el personaje seleccionado
+            switch (_selectedCharacter) {
+                case AARON_INTI:
+                    viewMatrix = _intiFirstPersonCam->getViewMatrix();
+                    eyePosition = _intiFirstPersonCam->getPosition();
+                    break;
+                case ROSS:
+                    viewMatrix = _rossFirstPersonCam->getViewMatrix();
+                    eyePosition = _rossFirstPersonCam->getPosition();
+                    break;
+                case VYRME:
+                    viewMatrix = _vyrmeFirstPersonCam->getViewMatrix();
+                    eyePosition = _vyrmeFirstPersonCam->getPosition();
+                    break;
+                default:
+                    // Si no se selecciona ningún personaje, usar la cámara Arcball por defecto
+                    viewMatrix = _arcballCam->getViewMatrix();
+                    eyePosition = _arcballCam->getPosition();
+                    break;
+            }
         }
 
-        // Draw the main scene
+        // Dibujar la escena principal
         _renderScene(viewMatrix, _projectionMatrix, eyePosition);
 
-        // Save the previous viewport
+        // Guardar el viewport previo
         GLint prevViewport[4];
         glGetIntegerv(GL_VIEWPORT, prevViewport);
 
-        // Clear depth buffer before rendering the second viewport
+        // Limpiar el buffer de profundidad antes de renderizar el segundo viewport
         glClear(GL_DEPTH_BUFFER_BIT);
 
-        // Set up the new viewport in the top-right corner
+        // Configurar el nuevo viewport en la esquina superior derecha
         GLint smallViewportWidth = framebufferWidth / 3;
         GLint smallViewportHeight = framebufferHeight / 3;
-        GLint smallViewportX = framebufferWidth - smallViewportWidth - 10; // Offset from right edge
-        GLint smallViewportY = framebufferHeight - smallViewportHeight - 10; // Offset from bottom edge
+        GLint smallViewportX = framebufferWidth - smallViewportWidth - 10; // Desplazamiento desde el borde derecho
+        GLint smallViewportY = framebufferHeight - smallViewportHeight - 10; // Desplazamiento desde el borde inferior
 
         glViewport(smallViewportX, smallViewportY, smallViewportWidth, smallViewportHeight);
 
-        // Compute the aspect ratio for the small viewport
+        // Calcular la relación de aspecto para el pequeño viewport
         float smallAspectRatio = static_cast<float>(smallViewportWidth) / static_cast<float>(smallViewportHeight);
 
-        // Recompute the projection matrix for the small viewport
+        // Recalcular la matriz de proyección para el pequeño viewport
         glm::mat4 smallProjectionMatrix = glm::perspective(glm::radians(45.0f), smallAspectRatio, 0.1f, 1000.0f);
 
-        // Use the first-person camera for the small viewport
-        glm::mat4 fpViewMatrix = _firstPersonCam->getViewMatrix();
-        glm::vec3 fpEyePosition = _firstPersonCam->getPosition();
+        // Para el pequeño viewport, usaremos la cámara en primera persona del personaje seleccionado
+        glm::mat4 fpViewMatrix;
+        glm::vec3 fpEyePosition;
 
-        // Draw the scene with the first-person camera
+        switch (_selectedCharacter) {
+            case AARON_INTI:
+                fpViewMatrix = _intiFirstPersonCam->getViewMatrix();
+                fpEyePosition = _intiFirstPersonCam->getPosition();
+                break;
+            case ROSS:
+                fpViewMatrix = _rossFirstPersonCam->getViewMatrix();
+                fpEyePosition = _rossFirstPersonCam->getPosition();
+                break;
+            case VYRME:
+                fpViewMatrix = _vyrmeFirstPersonCam->getViewMatrix();
+                fpEyePosition = _vyrmeFirstPersonCam->getPosition();
+                break;
+            default:
+                // Si no se selecciona ningún personaje, usar la cámara Arcball por defecto
+                fpViewMatrix = _arcballCam->getViewMatrix();
+                fpEyePosition = _arcballCam->getPosition();
+                break;
+        }
+
+        // Dibujar la escena con la cámara en primera persona en el pequeño viewport
         _renderScene(fpViewMatrix, smallProjectionMatrix, fpEyePosition);
 
-        // Restore the previous viewport
+        // Restaurar el viewport previo
         glViewport(prevViewport[0], prevViewport[1], prevViewport[2], prevViewport[3]);
 
-        // Update the scene (handle movement)
+        // Actualizar la escena (manejar el movimiento)
         _updateScene();
 
         glfwSwapBuffers(mpWindow);
@@ -777,13 +825,13 @@ void MP::run() {
 //
 // Private Helper FUnctions
 
-void MP::_updateFirstPersonCamera() {
+void MP::_updateIntiFirstPersonCamera() {
     glm::vec3 offset(0.0f, 4.0f, 0.0f);
     glm::mat4 rotation = glm::rotate(glm::mat4(1.0f), _planeHeading, CSCI441::Y_AXIS);
     glm::vec3 rotatedOffset = glm::vec3(rotation * glm::vec4(offset, 0.0f));
 
     glm::vec3 cameraPosition = _planePosition + rotatedOffset;
-    _firstPersonCam->setPosition(cameraPosition);
+    _intiFirstPersonCam->setPosition(cameraPosition);
 
     glm::vec3 facingDirection = glm::vec3(
         sinf(_planeHeading),
@@ -793,8 +841,49 @@ void MP::_updateFirstPersonCamera() {
 
     glm::vec3 backwardDirection = -facingDirection;
     glm::vec3 lookAtPoint = cameraPosition + backwardDirection;
-    _firstPersonCam->setLookAtPoint(lookAtPoint);
-    _firstPersonCam->computeViewMatrix();
+    _intiFirstPersonCam->setLookAtPoint(lookAtPoint);
+    _intiFirstPersonCam->computeViewMatrix();
+}
+
+void MP::_updateRossFirstPersonCamera() {
+    glm::vec3 offset(0.0f, 4.0f, -0.4f);
+    glm::mat4 rotation = glm::rotate(glm::mat4(1.0f), _rossHeading, CSCI441::Y_AXIS);
+    glm::vec3 rotatedOffset = glm::vec3(rotation * glm::vec4(offset, 0.0f));
+
+    glm::vec3 cameraPosition = _rossPosition + rotatedOffset;
+    _rossFirstPersonCam->setPosition(cameraPosition);
+
+    glm::vec3 facingDirection = glm::vec3(
+        sinf(_rossHeading),
+        0.0f,
+        cosf(_rossHeading)
+    );
+
+    glm::vec3 backwardDirection = -facingDirection;
+    glm::vec3 lookAtPoint = cameraPosition + backwardDirection;
+    _rossFirstPersonCam->setLookAtPoint(lookAtPoint);
+    _rossFirstPersonCam->computeViewMatrix();
+}
+
+
+void MP::_updateVyrmeFirstPersonCamera() {
+    glm::vec3 offset(0.0f, 3.0f, -0.5f);
+    glm::mat4 rotation = glm::rotate(glm::mat4(1.0f), _vyrmeHeading, CSCI441::Y_AXIS);
+    glm::vec3 rotatedOffset = glm::vec3(rotation * glm::vec4(offset, 0.0f));
+
+    glm::vec3 cameraPosition = _vyrmePosition + rotatedOffset;
+    _vyrmeFirstPersonCam->setPosition(cameraPosition);
+
+    glm::vec3 facingDirection = glm::vec3(
+        sinf(_vyrmeHeading),
+        0.0f,
+        cosf(_vyrmeHeading)
+    );
+
+    glm::vec3 backwardDirection = -facingDirection;
+    glm::vec3 lookAtPoint = cameraPosition + backwardDirection;
+    _vyrmeFirstPersonCam->setLookAtPoint(lookAtPoint);
+    _vyrmeFirstPersonCam->computeViewMatrix();
 }
 
 

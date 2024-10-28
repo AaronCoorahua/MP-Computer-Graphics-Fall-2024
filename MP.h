@@ -92,7 +92,9 @@ private:
     /// \desc the static fixed camera in our world
     ArcballCam* _arcballCam;
     CSCI441::FreeCam* _freeCam;
-    CSCI441::FreeCam* _firstPersonCam;
+    CSCI441::FreeCam* _intiFirstPersonCam;
+    CSCI441::FreeCam* _rossFirstPersonCam;
+    CSCI441::FreeCam* _vyrmeFirstPersonCam;
     /// \desc pair of values to store the speed the camera can move/rotate.
     /// \brief x = forward/backward delta, y = rotational delta
     glm::vec2 _cameraSpeed;
@@ -176,7 +178,9 @@ private:
 
     glm::vec2 _prevMousePosition;
 
-    void _updateFirstPersonCamera();
+    void _updateIntiFirstPersonCamera();
+    void _updateRossFirstPersonCamera();
+    void _updateVyrmeFirstPersonCamera();
 };
 
 void A3_engine_keyboard_callback(GLFWwindow *window, int key, int scancode, int action, int mods );
