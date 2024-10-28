@@ -183,6 +183,9 @@ private:
     void _updateVyrmeFirstPersonCamera();
 
     bool _isSmallViewportActive;
+
+    Character _smallViewportCharacter;
+    static constexpr int NUM_CHARACTERS = 3;
 };
 
 void A3_engine_keyboard_callback(GLFWwindow *window, int key, int scancode, int action, int mods );

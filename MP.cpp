@@ -32,7 +32,8 @@ MP::MP()
                                 _isLeftMouseButtonPressed(false),
                                 _isZooming(false),
                                 _currentCameraMode(ARCBALL),
-                                _isSmallViewportActive(false){
+                                _isSmallViewportActive(false),
+                                _smallViewportCharacter(AARON_INTI){
 
     for(auto& _key : _keys) _key = GL_FALSE;
     _mousePosition = glm::vec2(MOUSE_UNINITIALIZED, MOUSE_UNINITIALIZED );
@@ -95,6 +96,20 @@ void MP::handleKeyEvent(GLint key, GLint action) {
             _freeCam->setPhi(glm::radians(60.0f));
             _freeCam->recomputeOrientation();
             break;
+
+            case GLFW_KEY_LEFT:
+            case GLFW_KEY_RIGHT:
+                if (_currentCameraMode == FREE_CAM && _isSmallViewportActive) {
+                    if (key == GLFW_KEY_LEFT) {
+                        // Cambiar al personaje anterior
+                        _smallViewportCharacter = static_cast<Character>((_smallViewportCharacter + NUM_CHARACTERS - 1) % NUM_CHARACTERS);
+                    } else if (key == GLFW_KEY_RIGHT) {
+                        // Cambiar al siguiente personaje
+                        _smallViewportCharacter = static_cast<Character>((_smallViewportCharacter + 1) % NUM_CHARACTERS);
+                    }
+                }
+            break;
+
             default:
                 break;
         }
@@ -763,8 +778,8 @@ void MP::run() {
 
             GLint smallViewportWidth = framebufferWidth / 3;
             GLint smallViewportHeight = framebufferHeight / 3;
-            GLint smallViewportX = framebufferWidth - smallViewportWidth - 10; // Desplazamiento desde el borde derecho
-            GLint smallViewportY = framebufferHeight - smallViewportHeight - 10; // Desplazamiento desde el borde inferior
+            GLint smallViewportX = framebufferWidth - smallViewportWidth - 10;
+            GLint smallViewportY = framebufferHeight - smallViewportHeight - 10;
 
             glViewport(smallViewportX, smallViewportY, smallViewportWidth, smallViewportHeight);
 
@@ -775,23 +790,46 @@ void MP::run() {
             glm::mat4 fpViewMatrix;
             glm::vec3 fpEyePosition;
 
-            switch (_selectedCharacter) {
-                case AARON_INTI:
-                    fpViewMatrix = _intiFirstPersonCam->getViewMatrix();
-                    fpEyePosition = _intiFirstPersonCam->getPosition();
-                    break;
-                case ROSS:
-                    fpViewMatrix = _rossFirstPersonCam->getViewMatrix();
-                    fpEyePosition = _rossFirstPersonCam->getPosition();
-                    break;
-                case VYRME:
-                    fpViewMatrix = _vyrmeFirstPersonCam->getViewMatrix();
-                    fpEyePosition = _vyrmeFirstPersonCam->getPosition();
-                    break;
-                default:
-                    fpViewMatrix = _arcballCam->getViewMatrix();
-                    fpEyePosition = _arcballCam->getPosition();
-                    break;
+            if (_currentCameraMode == FREE_CAM) {
+
+                switch (_smallViewportCharacter) {
+                    case AARON_INTI:
+                        fpViewMatrix = _intiFirstPersonCam->getViewMatrix();
+                        fpEyePosition = _intiFirstPersonCam->getPosition();
+                        break;
+                    case ROSS:
+                        fpViewMatrix = _rossFirstPersonCam->getViewMatrix();
+                        fpEyePosition = _rossFirstPersonCam->getPosition();
+                        break;
+                    case VYRME:
+                        fpViewMatrix = _vyrmeFirstPersonCam->getViewMatrix();
+                        fpEyePosition = _vyrmeFirstPersonCam->getPosition();
+                        break;
+                    default:
+                        fpViewMatrix = _arcballCam->getViewMatrix();
+                        fpEyePosition = _arcballCam->getPosition();
+                        break;
+                }
+            } else {
+
+                switch (_selectedCharacter) {
+                    case AARON_INTI:
+                        fpViewMatrix = _intiFirstPersonCam->getViewMatrix();
+                        fpEyePosition = _intiFirstPersonCam->getPosition();
+                        break;
+                    case ROSS:
+                        fpViewMatrix = _rossFirstPersonCam->getViewMatrix();
+                        fpEyePosition = _rossFirstPersonCam->getPosition();
+                        break;
+                    case VYRME:
+                        fpViewMatrix = _vyrmeFirstPersonCam->getViewMatrix();
+                        fpEyePosition = _vyrmeFirstPersonCam->getPosition();
+                        break;
+                    default:
+                        fpViewMatrix = _arcballCam->getViewMatrix();
+                        fpEyePosition = _arcballCam->getPosition();
+                        break;
+                }
             }
 
             _renderScene(fpViewMatrix, smallProjectionMatrix, fpEyePosition);
@@ -805,6 +843,7 @@ void MP::run() {
         glfwPollEvents();
     }
 }
+
 
 
 
