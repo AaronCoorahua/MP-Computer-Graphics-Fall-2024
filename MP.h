@@ -4,6 +4,7 @@
 #include "Cameras/ArcballCam.h"
 #include <OpenGLEngine.hpp>
 #include <ShaderProgram.hpp>
+#include "FreeCam.hpp"
 
 #include "Heroes/Aaron_Inti.h"
 #include "Heroes/Ross.h"
@@ -80,8 +81,15 @@ private:
     /// \desc current state of the left mouse button
     GLint _leftMouseButtonState;
 
+
+    enum CameraMode {
+        ARCBALL,
+        FREE_CAM
+    } _currentCameraMode;
     /// \desc the static fixed camera in our world
     ArcballCam* _arcballCam;
+    CSCI441::FreeCam* _freeCam;
+
     /// \desc pair of values to store the speed the camera can move/rotate.
     /// \brief x = forward/backward delta, y = rotational delta
     glm::vec2 _cameraSpeed;
@@ -162,8 +170,8 @@ private:
     bool _isShiftPressed;
     bool _isLeftMouseButtonPressed;
     bool _isZooming;
-    glm::vec2 _prevMousePosition;
 
+    glm::vec2 _prevMousePosition;
 };
 
 void A3_engine_keyboard_callback(GLFWwindow *window, int key, int scancode, int action, int mods );

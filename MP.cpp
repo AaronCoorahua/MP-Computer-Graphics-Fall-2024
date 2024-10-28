@@ -30,16 +30,19 @@ MP::MP()
                                  "MP: Over Hill and Under Hill"),
                                 _isShiftPressed(false),
                                 _isLeftMouseButtonPressed(false),
-                                _isZooming(false){
+                                _isZooming(false),
+                                _currentCameraMode(ARCBALL){
 
     for(auto& _key : _keys) _key = GL_FALSE;
     _mousePosition = glm::vec2(MOUSE_UNINITIALIZED, MOUSE_UNINITIALIZED );
     _leftMouseButtonState = GLFW_RELEASE;
     _arcballCam = new ArcballCam();
+    _freeCam = new CSCI441::FreeCam();
 }
 
 MP::~MP() {
     delete _arcballCam;
+    delete _freeCam;
 }
 
 
@@ -52,23 +55,33 @@ void MP::handleKeyEvent(GLint key, GLint action) {
             case GLFW_KEY_Q:
             case GLFW_KEY_ESCAPE:
                 setWindowShouldClose();
-            break;
+                break;
             case GLFW_KEY_LEFT_SHIFT:
             case GLFW_KEY_RIGHT_SHIFT:
                 _isShiftPressed = true;
-            break;
+                break;
             case GLFW_KEY_Z:
                 _selectedCharacter = AARON_INTI;
-            _arcballCam->setLookAtPoint(_planePosition);
-            break;
+                _currentCameraMode = ARCBALL;
+                _arcballCam->setLookAtPoint(_planePosition);
+                break;
             case GLFW_KEY_X:
                 _selectedCharacter = ROSS;
-            _arcballCam->setLookAtPoint(_rossPosition);
-            break;
+                _currentCameraMode = ARCBALL;
+                _arcballCam->setLookAtPoint(_rossPosition);
+                break;
             case GLFW_KEY_C:
                 _selectedCharacter = VYRME;
-            _arcballCam->setLookAtPoint(_vyrmePosition);
-            break;
+                _currentCameraMode = ARCBALL;
+                _arcballCam->setLookAtPoint(_vyrmePosition);
+                break;
+            case GLFW_KEY_2:
+                _currentCameraMode = FREE_CAM;
+                _freeCam->setPosition(glm::vec3(0.0f, 40.0f, 60.0f));
+                _freeCam->setTheta(glm::radians(0.0f));
+                _freeCam->setPhi(glm::radians(60.0f));
+                _freeCam->recomputeOrientation();
+                break;
             default:
                 break;
         }
@@ -96,28 +109,36 @@ void MP::handleMouseButtonEvent(GLint button, GLint action) {
     }
 }
 
+
 void MP::handleCursorPositionEvent(glm::vec2 currMousePosition) {
     if (_mousePosition.x == MOUSE_UNINITIALIZED) {
         _mousePosition = currMousePosition;
         return;
     }
 
-    if (_isZooming) {
-
-        float deltaY = currMousePosition.y - _prevMousePosition.y;
-        _arcballCam->zoom(deltaY * 1.0f);
-
-
-        _prevMousePosition = currMousePosition;
-    }
-    else if (_leftMouseButtonState == GLFW_PRESS && !_isShiftPressed) {
+    if (_isLeftMouseButtonPressed) {
         float deltaX = currMousePosition.x - _mousePosition.x;
         float deltaY = currMousePosition.y - _mousePosition.y;
 
         int viewportWidth, viewportHeight;
         glfwGetFramebufferSize(mpWindow, &viewportWidth, &viewportHeight);
 
-        _arcballCam->rotate(deltaX, deltaY, viewportWidth, viewportHeight);
+        if (_currentCameraMode == ARCBALL) {
+            if (_isShiftPressed) {
+                // Zoom in ArcballCam
+                float sensitivity = 1.0f; // Adjust sensitivity as needed
+                _arcballCam->zoom(deltaY * sensitivity);
+            } else {
+                // Rotate ArcballCam
+                _arcballCam->rotate(deltaX, deltaY, viewportWidth, viewportHeight);
+            }
+        } else if (_currentCameraMode == FREE_CAM) {
+            // Rotate FreeCam
+            float sensitivity = 0.005f; // Adjust sensitivity as needed
+            _freeCam->setTheta(_freeCam->getTheta() + deltaX * sensitivity);
+            _freeCam->setPhi(_freeCam->getPhi() - deltaY * sensitivity);
+            _freeCam->recomputeOrientation();
+        }
     }
 
     _mousePosition = currMousePosition;
@@ -354,8 +375,14 @@ void MP::_renderScene(glm::mat4 viewMtx, glm::mat4 projMtx) const {
     // use our lighting shader program
     _lightingShaderProgram->useProgram();
 
-    glm::vec3 eyePosition = _arcballCam->getPosition();
+    glm::vec3 eyePosition;
+    if (_currentCameraMode == ARCBALL) {
+        eyePosition = _arcballCam->getPosition();
+    } else if (_currentCameraMode == FREE_CAM) {
+        eyePosition = _freeCam->getPosition();
+    }
     _lightingShaderProgram->setProgramUniform(_lightingShaderUniformLocations.eyePosition, eyePosition);
+
 
     //// BEGIN DRAWING THE GROUND PLANE ////
     // draw the ground plane
@@ -512,184 +539,198 @@ void MP::_renderScene(glm::mat4 viewMtx, glm::mat4 projMtx) const {
 }
 
 void MP::_updateScene() {
-    float moveSpeed = 0.08f;
+    float moveSpeed = 0.1f;
     float rotateSpeed = glm::radians(1.5f);
 
-    const float MIN_X = -WORLD_SIZE + 3;
-    const float MAX_X = WORLD_SIZE - 3;
-    const float MIN_Z = -WORLD_SIZE + 3;
-    const float MAX_Z = WORLD_SIZE - 3;
+    const float MIN_X = -WORLD_SIZE + 3.0f;
+    const float MAX_X = WORLD_SIZE - 3.0f;
+    const float MIN_Z = -WORLD_SIZE + 3.0f;
+    const float MAX_Z = WORLD_SIZE - 3.0f;
 
-    switch (_selectedCharacter) {
-        case AARON_INTI: {
-            if (_keys[GLFW_KEY_W]) {
-                glm::vec3 direction(
-                    sinf(_planeHeading),
-                    0.0f,
-                    cosf(_planeHeading)
-                );
-                glm::vec3 newPosition = _planePosition - direction * moveSpeed;
-                newPosition.x = std::max(MIN_X, std::min(newPosition.x, MAX_X));
-                newPosition.z = std::max(MIN_Z, std::min(newPosition.z, MAX_Z));
-                _planePosition = newPosition;
-                _pPlane->moveBackward();
-            }
-            if (_keys[GLFW_KEY_S]) {
-                glm::vec3 direction(
-                    sinf(_planeHeading),
-                    0.0f,
-                    cosf(_planeHeading)
-                );
-                glm::vec3 newPosition = _planePosition + direction * moveSpeed;
-                newPosition.x = std::max(MIN_X, std::min(newPosition.x, MAX_X));
-                newPosition.z = std::max(MIN_Z, std::min(newPosition.z, MAX_Z));
-                _planePosition = newPosition;
-                _pPlane->moveForward();
-            }
-            if (_keys[GLFW_KEY_A]) {
-                _planeHeading += rotateSpeed;
-            }
-            if (_keys[GLFW_KEY_D]) {
-                _planeHeading -= rotateSpeed;
-            }
-
-            if (_planeHeading > glm::two_pi<float>())
-                _planeHeading -= glm::two_pi<float>();
-            else if (_planeHeading < 0.0f)
-                _planeHeading += glm::two_pi<float>();
-
-            float Y_OFFSET = 2.0f;
-            glm::vec3 intiLookAtPoint = _planePosition;
-            intiLookAtPoint.y += Y_OFFSET;
-            _arcballCam->setLookAtPoint(intiLookAtPoint);
-            break;
+    if (_currentCameraMode == FREE_CAM) {
+        // Move FreeCam with WASD
+        if (_keys[GLFW_KEY_W]) {
+            _freeCam->moveForward(moveSpeed);
         }
-
-        case ROSS: {
-            if (_keys[GLFW_KEY_W]) {
-                glm::vec3 direction(
-                    sinf(_rossHeading),
-                    0.0f,
-                    cosf(_rossHeading)
-                );
-                glm::vec3 newPosition = _rossPosition - direction * moveSpeed;
-                newPosition.x = std::max(MIN_X, std::min(newPosition.x, MAX_X));
-                newPosition.z = std::max(MIN_Z, std::min(newPosition.z, MAX_Z));
-                _rossPosition = newPosition;
-                _rossHero->moveForward();
-            }
-            if (_keys[GLFW_KEY_S]) {
-                glm::vec3 direction(
-                    sinf(_rossHeading),
-                    0.0f,
-                    cosf(_rossHeading)
-                );
-                glm::vec3 newPosition = _rossPosition + direction * moveSpeed;
-                newPosition.x = std::max(MIN_X, std::min(newPosition.x, MAX_X));
-                newPosition.z = std::max(MIN_Z, std::min(newPosition.z, MAX_Z));
-                _rossPosition = newPosition;
-                _rossHero->moveBackward();
-            }
-            if (_keys[GLFW_KEY_A]) {
-                _rossHeading += rotateSpeed;
-            }
-            if (_keys[GLFW_KEY_D]) {
-                _rossHeading -= rotateSpeed;
-            }
-
-            if (_rossHeading > glm::two_pi<float>())
-                _rossHeading -= glm::two_pi<float>();
-            else if (_rossHeading < 0.0f)
-                _rossHeading += glm::two_pi<float>();
-            float Y_OFFSET = 3.0f;
-            glm::vec3 rossLookAtPoint = _rossPosition;
-            rossLookAtPoint.y += Y_OFFSET;
-            _arcballCam->setLookAtPoint(rossLookAtPoint);
-            break;
+        if (_keys[GLFW_KEY_S]) {
+            _freeCam->moveBackward(moveSpeed);
         }
+    } else { // ARCBALL
+        switch (_selectedCharacter) {
+            case AARON_INTI: {
+                if (_keys[GLFW_KEY_W]) {
+                    glm::vec3 direction(
+                        sinf(_planeHeading),
+                        0.0f,
+                        cosf(_planeHeading)
+                    );
+                    glm::vec3 newPosition = _planePosition - direction * moveSpeed;
+                    newPosition.x = std::max(MIN_X, std::min(newPosition.x, MAX_X));
+                    newPosition.z = std::max(MIN_Z, std::min(newPosition.z, MAX_Z));
+                    _planePosition = newPosition;
+                    _pPlane->moveBackward();
+                }
+                if (_keys[GLFW_KEY_S]) {
+                    glm::vec3 direction(
+                        sinf(_planeHeading),
+                        0.0f,
+                        cosf(_planeHeading)
+                    );
+                    glm::vec3 newPosition = _planePosition + direction * moveSpeed;
+                    newPosition.x = std::max(MIN_X, std::min(newPosition.x, MAX_X));
+                    newPosition.z = std::max(MIN_Z, std::min(newPosition.z, MAX_Z));
+                    _planePosition = newPosition;
+                    _pPlane->moveForward();
+                }
+                if (_keys[GLFW_KEY_A]) {
+                    _planeHeading += rotateSpeed;
+                }
+                if (_keys[GLFW_KEY_D]) {
+                    _planeHeading -= rotateSpeed;
+                }
 
-        case VYRME: {
-            if (_keys[GLFW_KEY_W]) {
-                glm::vec3 direction(
-                    sinf(_vyrmeHeading),
-                    0.0f,
-                    cosf(_vyrmeHeading)
-                );
-                glm::vec3 newPosition = _vyrmePosition - direction * moveSpeed;
-                newPosition.x = std::max(MIN_X, std::min(newPosition.x, MAX_X));
-                newPosition.z = std::max(MIN_Z, std::min(newPosition.z, MAX_Z));
-                _vyrmePosition = newPosition;
-                _vyrmeHero->moveForward();
-            }
-            if (_keys[GLFW_KEY_S]) {
-                glm::vec3 direction(
-                    sinf(_vyrmeHeading),
-                    0.0f,
-                    cosf(_vyrmeHeading)
-                );
-                glm::vec3 newPosition = _vyrmePosition + direction * moveSpeed;
-                newPosition.x = std::max(MIN_X, std::min(newPosition.x, MAX_X));
-                newPosition.z = std::max(MIN_Z, std::min(newPosition.z, MAX_Z));
-                _vyrmePosition = newPosition;
-                _vyrmeHero->moveBackward();
-            }
-            if (_keys[GLFW_KEY_A]) {
-                _vyrmeHeading += rotateSpeed;
-            }
-            if (_keys[GLFW_KEY_D]) {
-                _vyrmeHeading -= rotateSpeed;
+                if (_planeHeading > glm::two_pi<float>())
+                    _planeHeading -= glm::two_pi<float>();
+                else if (_planeHeading < 0.0f)
+                    _planeHeading += glm::two_pi<float>();
+
+                float Y_OFFSET = 2.0f;
+                glm::vec3 intiLookAtPoint = _planePosition;
+                intiLookAtPoint.y += Y_OFFSET;
+                _arcballCam->setLookAtPoint(intiLookAtPoint);
+                break;
             }
 
-            if (_vyrmeHeading > glm::two_pi<float>())
-                _vyrmeHeading -= glm::two_pi<float>();
-            else if (_vyrmeHeading < 0.0f)
-                _vyrmeHeading += glm::two_pi<float>();
+            case ROSS: {
+                if (_keys[GLFW_KEY_W]) {
+                    glm::vec3 direction(
+                        sinf(_rossHeading),
+                        0.0f,
+                        cosf(_rossHeading)
+                    );
+                    glm::vec3 newPosition = _rossPosition - direction * moveSpeed;
+                    newPosition.x = std::max(MIN_X, std::min(newPosition.x, MAX_X));
+                    newPosition.z = std::max(MIN_Z, std::min(newPosition.z, MAX_Z));
+                    _rossPosition = newPosition;
+                    _rossHero->moveForward();
+                }
+                if (_keys[GLFW_KEY_S]) {
+                    glm::vec3 direction(
+                        sinf(_rossHeading),
+                        0.0f,
+                        cosf(_rossHeading)
+                    );
+                    glm::vec3 newPosition = _rossPosition + direction * moveSpeed;
+                    newPosition.x = std::max(MIN_X, std::min(newPosition.x, MAX_X));
+                    newPosition.z = std::max(MIN_Z, std::min(newPosition.z, MAX_Z));
+                    _rossPosition = newPosition;
+                    _rossHero->moveBackward();
+                }
+                if (_keys[GLFW_KEY_A]) {
+                    _rossHeading += rotateSpeed;
+                }
+                if (_keys[GLFW_KEY_D]) {
+                    _rossHeading -= rotateSpeed;
+                }
 
-            float Y_OFFSET = 2.0f;
-            glm::vec3 vyrmeLookAtPoint = _vyrmePosition;
-            vyrmeLookAtPoint.y += Y_OFFSET;
-            _arcballCam->setLookAtPoint(vyrmeLookAtPoint);
-            break;
+                if (_rossHeading > glm::two_pi<float>())
+                    _rossHeading -= glm::two_pi<float>();
+                else if (_rossHeading < 0.0f)
+                    _rossHeading += glm::two_pi<float>();
+
+                float Y_OFFSET = 3.0f;
+                glm::vec3 rossLookAtPoint = _rossPosition;
+                rossLookAtPoint.y += Y_OFFSET;
+                _arcballCam->setLookAtPoint(rossLookAtPoint);
+                break;
+            }
+
+            case VYRME: {
+                if (_keys[GLFW_KEY_W]) {
+                    glm::vec3 direction(
+                        sinf(_vyrmeHeading),
+                        0.0f,
+                        cosf(_vyrmeHeading)
+                    );
+                    glm::vec3 newPosition = _vyrmePosition - direction * moveSpeed;
+                    newPosition.x = std::max(MIN_X, std::min(newPosition.x, MAX_X));
+                    newPosition.z = std::max(MIN_Z, std::min(newPosition.z, MAX_Z));
+                    _vyrmePosition = newPosition;
+                    _vyrmeHero->moveForward();
+                }
+                if (_keys[GLFW_KEY_S]) {
+                    glm::vec3 direction(
+                        sinf(_vyrmeHeading),
+                        0.0f,
+                        cosf(_vyrmeHeading)
+                    );
+                    glm::vec3 newPosition = _vyrmePosition + direction * moveSpeed;
+                    newPosition.x = std::max(MIN_X, std::min(newPosition.x, MAX_X));
+                    newPosition.z = std::max(MIN_Z, std::min(newPosition.z, MAX_Z));
+                    _vyrmePosition = newPosition;
+                    _vyrmeHero->moveBackward();
+                }
+                if (_keys[GLFW_KEY_A]) {
+                    _vyrmeHeading += rotateSpeed;
+                }
+                if (_keys[GLFW_KEY_D]) {
+                    _vyrmeHeading -= rotateSpeed;
+                }
+
+                if (_vyrmeHeading > glm::two_pi<float>())
+                    _vyrmeHeading -= glm::two_pi<float>();
+                else if (_vyrmeHeading < 0.0f)
+                    _vyrmeHeading += glm::two_pi<float>();
+
+                float Y_OFFSET = 2.0f;
+                glm::vec3 vyrmeLookAtPoint = _vyrmePosition;
+                vyrmeLookAtPoint.y += Y_OFFSET;
+                _arcballCam->setLookAtPoint(vyrmeLookAtPoint);
+                break;
+            }
+
+            default:
+                break;
         }
-
-        default:
-            break;
     }
 }
 
-void MP::run() {
-    //  This is our draw loop - all rendering is done here.  We use a loop to keep the window open
-    //	until the user decides to close the window and quit the program.  Without a loop, the
-    //	window will display once and then the program exits.
+    void MP::run() {
+        // Establecer el puntero de usuario para los callbacks
+        glfwSetWindowUserPointer(mpWindow, this);
 
-    glfwSetKeyCallback(mpWindow, A3_engine_keyboard_callback);
-    glfwSetMouseButtonCallback(mpWindow, A3_engine_mouse_button_callback);
-    glfwSetCursorPosCallback(mpWindow, A3_engine_cursor_callback);
+        while( !glfwWindowShouldClose(mpWindow) ) {	        // check if the window was instructed to be closed
+            glDrawBuffer( GL_BACK );				                // work with our back frame buffer
+            glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );	// clear the current color contents and depth buffer in the window
 
-    while( !glfwWindowShouldClose(mpWindow) ) {	        // check if the window was instructed to be closed
-        glDrawBuffer( GL_BACK );				        // work with our back frame buffer
-        glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );	// clear the current color contents and depth buffer in the window
+            // Get the size of our framebuffer.
+            GLint framebufferWidth, framebufferHeight;
+            glfwGetFramebufferSize(mpWindow, &framebufferWidth, &framebufferHeight);
 
-        // Get the size of our framebuffer.  Ideally this should be the same dimensions as our window, but
-        // when using a Retina display the actual window can be larger than the requested window.  Therefore,
-        // query what the actual size of the window we are rendering to is.
-        GLint framebufferWidth, framebufferHeight;
-        glfwGetFramebufferSize( mpWindow, &framebufferWidth, &framebufferHeight );
+            // Update the viewport
+            glViewport( 0, 0, framebufferWidth, framebufferHeight );
+            float aspectRatio = static_cast<float>(framebufferWidth) / static_cast<float>(framebufferHeight);
+            _projectionMatrix = glm::perspective(glm::radians(45.0f), aspectRatio, 0.1f, 1000.0f);
 
-        // update the viewport - tell OpenGL we want to render to the whole window
-        glViewport( 0, 0, framebufferWidth, framebufferHeight );
-        float aspectRatio = static_cast<float>(framebufferWidth) / static_cast<float>(framebufferHeight);
-        _projectionMatrix = glm::perspective(glm::radians(45.0f), aspectRatio, 0.1f, 1000.0f);
+            // Determine the view matrix based on the current camera mode
+            glm::mat4 viewMatrix;
+            if (_currentCameraMode == ARCBALL) {
+                viewMatrix = _arcballCam->getViewMatrix();
+            } else if (_currentCameraMode == FREE_CAM) {
+                viewMatrix = _freeCam->getViewMatrix();
+            }
 
-        // draw everything to the window
-        _renderScene(_arcballCam->getViewMatrix(), _projectionMatrix);
+            // Draw the scene with the appropriate view and projection matrices
+            _renderScene(viewMatrix, _projectionMatrix);
 
-        _updateScene();
+            // Update the scene (handle movement)
+            _updateScene();
 
-        glfwSwapBuffers(mpWindow);                       // flush the OpenGL commands and make sure they get rendered!
-        glfwPollEvents();				                // check for any events and signal to redraw screen
+            glfwSwapBuffers(mpWindow);                       // flush the OpenGL commands and make sure they get rendered!
+            glfwPollEvents();				                // check for any events and signal to redraw screen
+        }
     }
-}
+
 
 //*************************************************************************************
 //
