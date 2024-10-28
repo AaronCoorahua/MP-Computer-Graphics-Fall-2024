@@ -342,6 +342,9 @@ void MP::mSetupScene() {
     _vyrmePosition = glm::vec3(10.0f, -0.3f, 0.0f);
     _vyrmeHeading = 0.0f;
 
+    _updateIntiFirstPersonCamera();
+    _updateRossFirstPersonCamera();
+    _updateVyrmeFirstPersonCamera();
     // Set up the projection matrix
     int width, height;
     glfwGetFramebufferSize(mpWindow, &width, &height);
