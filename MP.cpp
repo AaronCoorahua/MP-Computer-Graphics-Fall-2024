@@ -38,11 +38,13 @@ MP::MP()
     _leftMouseButtonState = GLFW_RELEASE;
     _arcballCam = new ArcballCam();
     _freeCam = new CSCI441::FreeCam();
+    _firstPersonCam = new CSCI441::FreeCam();
 }
 
 MP::~MP() {
     delete _arcballCam;
     delete _freeCam;
+    delete _firstPersonCam;
 }
 
 
@@ -75,6 +77,10 @@ void MP::handleKeyEvent(GLint key, GLint action) {
                 _currentCameraMode = ARCBALL;
                 _arcballCam->setLookAtPoint(_vyrmePosition);
                 break;
+            case GLFW_KEY_1:
+                _currentCameraMode = FIRST_PERSON_CAM;
+            break;
+
             case GLFW_KEY_2:
                 _currentCameraMode = FREE_CAM;
                 _freeCam->setPosition(glm::vec3(0.0f, 40.0f, 60.0f));
@@ -303,6 +309,8 @@ void MP::mSetupScene() {
         glm::vec3(0.0f, 0.0f, 0.0f),    // Look-at point (plane position)
         CSCI441::Y_AXIS                 // Up vector
     );
+
+
     _planePosition = glm::vec3(0.0f, 0.0f, 0.0f);
     _planeHeading = 0.0f;
 
@@ -371,17 +379,11 @@ void MP::mCleanupBuffers() {
 //
 // Rendering / Drawing Functions - this is where the magic happens!
 
-void MP::_renderScene(glm::mat4 viewMtx, glm::mat4 projMtx) const {
+void MP::_renderScene(glm::mat4 viewMtx, glm::mat4 projMtx, glm::vec3 eyePosition) const {
     // use our lighting shader program
     _lightingShaderProgram->useProgram();
-
-    glm::vec3 eyePosition;
-    if (_currentCameraMode == ARCBALL) {
-        eyePosition = _arcballCam->getPosition();
-    } else if (_currentCameraMode == FREE_CAM) {
-        eyePosition = _freeCam->getPosition();
-    }
     _lightingShaderProgram->setProgramUniform(_lightingShaderUniformLocations.eyePosition, eyePosition);
+
 
 
     //// BEGIN DRAWING THE GROUND PLANE ////
@@ -598,6 +600,7 @@ void MP::_updateScene() {
                 glm::vec3 intiLookAtPoint = _planePosition;
                 intiLookAtPoint.y += Y_OFFSET;
                 _arcballCam->setLookAtPoint(intiLookAtPoint);
+                _updateFirstPersonCamera();
                 break;
             }
 
@@ -695,46 +698,105 @@ void MP::_updateScene() {
     }
 }
 
-    void MP::run() {
-        // Establecer el puntero de usuario para los callbacks
-        glfwSetWindowUserPointer(mpWindow, this);
+void MP::run() {
+    // Set the user pointer for callbacks
+    glfwSetWindowUserPointer(mpWindow, this);
 
-        while( !glfwWindowShouldClose(mpWindow) ) {	        // check if the window was instructed to be closed
-            glDrawBuffer( GL_BACK );				                // work with our back frame buffer
-            glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );	// clear the current color contents and depth buffer in the window
+    while( !glfwWindowShouldClose(mpWindow) ) {
+        glDrawBuffer( GL_BACK );
+        glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
-            // Get the size of our framebuffer.
-            GLint framebufferWidth, framebufferHeight;
-            glfwGetFramebufferSize(mpWindow, &framebufferWidth, &framebufferHeight);
+        // Get the size of our framebuffer.
+        GLint framebufferWidth, framebufferHeight;
+        glfwGetFramebufferSize(mpWindow, &framebufferWidth, &framebufferHeight);
 
-            // Update the viewport
-            glViewport( 0, 0, framebufferWidth, framebufferHeight );
-            float aspectRatio = static_cast<float>(framebufferWidth) / static_cast<float>(framebufferHeight);
-            _projectionMatrix = glm::perspective(glm::radians(45.0f), aspectRatio, 0.1f, 1000.0f);
+        // Update the viewport for the main scene
+        glViewport(0, 0, framebufferWidth, framebufferHeight);
+        float aspectRatio = static_cast<float>(framebufferWidth) / static_cast<float>(framebufferHeight);
+        _projectionMatrix = glm::perspective(glm::radians(45.0f), aspectRatio, 0.1f, 1000.0f);
 
-            // Determine the view matrix based on the current camera mode
-            glm::mat4 viewMatrix;
-            if (_currentCameraMode == ARCBALL) {
-                viewMatrix = _arcballCam->getViewMatrix();
-            } else if (_currentCameraMode == FREE_CAM) {
-                viewMatrix = _freeCam->getViewMatrix();
-            }
-
-            // Draw the scene with the appropriate view and projection matrices
-            _renderScene(viewMatrix, _projectionMatrix);
-
-            // Update the scene (handle movement)
-            _updateScene();
-
-            glfwSwapBuffers(mpWindow);                       // flush the OpenGL commands and make sure they get rendered!
-            glfwPollEvents();				                // check for any events and signal to redraw screen
+        // Determine the view matrix based on the current camera mode
+        glm::mat4 viewMatrix;
+        glm::vec3 eyePosition;
+        if (_currentCameraMode == ARCBALL) {
+            viewMatrix = _arcballCam->getViewMatrix();
+            eyePosition = _arcballCam->getPosition();
+        } else if (_currentCameraMode == FREE_CAM) {
+            viewMatrix = _freeCam->getViewMatrix();
+            eyePosition = _freeCam->getPosition();
+        } else if (_currentCameraMode == FIRST_PERSON_CAM) {
+            viewMatrix = _firstPersonCam->getViewMatrix();
+            eyePosition = _firstPersonCam->getPosition();
         }
+
+        // Draw the main scene
+        _renderScene(viewMatrix, _projectionMatrix, eyePosition);
+
+        // Save the previous viewport
+        GLint prevViewport[4];
+        glGetIntegerv(GL_VIEWPORT, prevViewport);
+
+        // Clear depth buffer before rendering the second viewport
+        glClear(GL_DEPTH_BUFFER_BIT);
+
+        // Set up the new viewport in the top-right corner
+        GLint smallViewportWidth = framebufferWidth / 3;
+        GLint smallViewportHeight = framebufferHeight / 3;
+        GLint smallViewportX = framebufferWidth - smallViewportWidth - 10; // Offset from right edge
+        GLint smallViewportY = framebufferHeight - smallViewportHeight - 10; // Offset from bottom edge
+
+        glViewport(smallViewportX, smallViewportY, smallViewportWidth, smallViewportHeight);
+
+        // Compute the aspect ratio for the small viewport
+        float smallAspectRatio = static_cast<float>(smallViewportWidth) / static_cast<float>(smallViewportHeight);
+
+        // Recompute the projection matrix for the small viewport
+        glm::mat4 smallProjectionMatrix = glm::perspective(glm::radians(45.0f), smallAspectRatio, 0.1f, 1000.0f);
+
+        // Use the first-person camera for the small viewport
+        glm::mat4 fpViewMatrix = _firstPersonCam->getViewMatrix();
+        glm::vec3 fpEyePosition = _firstPersonCam->getPosition();
+
+        // Draw the scene with the first-person camera
+        _renderScene(fpViewMatrix, smallProjectionMatrix, fpEyePosition);
+
+        // Restore the previous viewport
+        glViewport(prevViewport[0], prevViewport[1], prevViewport[2], prevViewport[3]);
+
+        // Update the scene (handle movement)
+        _updateScene();
+
+        glfwSwapBuffers(mpWindow);
+        glfwPollEvents();
     }
+}
+
 
 
 //*************************************************************************************
 //
 // Private Helper FUnctions
+
+void MP::_updateFirstPersonCamera() {
+    glm::vec3 offset(0.0f, 4.0f, 0.0f);
+    glm::mat4 rotation = glm::rotate(glm::mat4(1.0f), _planeHeading, CSCI441::Y_AXIS);
+    glm::vec3 rotatedOffset = glm::vec3(rotation * glm::vec4(offset, 0.0f));
+
+    glm::vec3 cameraPosition = _planePosition + rotatedOffset;
+    _firstPersonCam->setPosition(cameraPosition);
+
+    glm::vec3 facingDirection = glm::vec3(
+        sinf(_planeHeading),
+        0.0f,
+        cosf(_planeHeading)
+    );
+
+    glm::vec3 backwardDirection = -facingDirection;
+    glm::vec3 lookAtPoint = cameraPosition + backwardDirection;
+    _firstPersonCam->setLookAtPoint(lookAtPoint);
+    _firstPersonCam->computeViewMatrix();
+}
+
 
 void MP::_computeAndSendMatrixUniforms(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx) const {
     // precompute the Model-View-Projection matrix on the CPU

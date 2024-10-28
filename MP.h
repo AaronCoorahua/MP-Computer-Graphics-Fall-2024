@@ -5,6 +5,7 @@
 #include <OpenGLEngine.hpp>
 #include <ShaderProgram.hpp>
 #include "FreeCam.hpp"
+#include "FixedCam.hpp"
 
 #include "Heroes/Aaron_Inti.h"
 #include "Heroes/Ross.h"
@@ -66,7 +67,7 @@ private:
     /// \desc draws everything to the scene from a particular point of view
     /// \param viewMtx the current view matrix for our camera
     /// \param projMtx the current projection matrix for our camera
-    void _renderScene(glm::mat4 viewMtx, glm::mat4 projMtx) const;
+    void _renderScene(glm::mat4 viewMtx, glm::mat4 projMtx, glm::vec3 eyePosition) const;
     /// \desc handles moving our FreeCam as determined by keyboard input
     void _updateScene();
 
@@ -84,12 +85,14 @@ private:
 
     enum CameraMode {
         ARCBALL,
-        FREE_CAM
+        FREE_CAM,
+        FIRST_PERSON_CAM
     } _currentCameraMode;
+
     /// \desc the static fixed camera in our world
     ArcballCam* _arcballCam;
     CSCI441::FreeCam* _freeCam;
-
+    CSCI441::FreeCam* _firstPersonCam;
     /// \desc pair of values to store the speed the camera can move/rotate.
     /// \brief x = forward/backward delta, y = rotational delta
     glm::vec2 _cameraSpeed;
@@ -172,6 +175,8 @@ private:
     bool _isZooming;
 
     glm::vec2 _prevMousePosition;
+
+    void _updateFirstPersonCamera();
 };
 
 void A3_engine_keyboard_callback(GLFWwindow *window, int key, int scancode, int action, int mods );
