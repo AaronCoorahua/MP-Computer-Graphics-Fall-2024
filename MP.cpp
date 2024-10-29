@@ -268,9 +268,6 @@ void MP::_createGroundBuffers() {
     glBindBuffer(GL_ARRAY_BUFFER, vbods[0]);
     glBufferData(GL_ARRAY_BUFFER, sizeof(groundQuad), groundQuad, GL_STATIC_DRAW);
 
-    glEnableVertexAttribArray(_lightingShaderAttributeLocations.vPos);
-    glVertexAttribPointer(_lightingShaderAttributeLocations.vPos, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)nullptr);
-
     // TODO #10: hook up vertex normal attribute
     glEnableVertexAttribArray(_lightingShaderAttributeLocations.vPos);
     glVertexAttribPointer(_lightingShaderAttributeLocations.vPos, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)nullptr);
@@ -365,16 +362,14 @@ void MP::mSetupScene() {
     _lightingShaderProgram->setProgramUniform(_lightingShaderUniformLocations.lightSpecularColor, lightSpecularColor);
 
     glProgramUniform3fv(_lightingShaderProgram->getShaderProgramHandle(),
-    _lightingShaderUniformLocations.lightDirection,
-    1,
-    glm::value_ptr(lightDirection)
-    );
+                        _lightingShaderUniformLocations.lightDirection,
+                        1,
+                        glm::value_ptr(lightDirection));
 
     glProgramUniform3fv(_lightingShaderProgram->getShaderProgramHandle(),
-        _lightingShaderUniformLocations.lightDiffuseColor,
-        1,
-        glm::value_ptr(lightDiffuseColor)
-    );
+                        _lightingShaderUniformLocations.lightDiffuseColor,
+                        1,
+                        glm::value_ptr(lightDiffuseColor));
 }
 
 //*************************************************************************************
@@ -416,10 +411,10 @@ void MP::_renderScene(glm::mat4 viewMtx, glm::mat4 projMtx, glm::vec3 eyePositio
     glm::mat4 groundModelMtx = glm::scale( glm::mat4(1.0f), glm::vec3(WORLD_SIZE, 1.0f, WORLD_SIZE));
     _computeAndSendMatrixUniforms(groundModelMtx, viewMtx, projMtx);
 
-    glm::vec3 groundAmbientColor = glm::vec3(0.1f, 0.1f, 0.1f);
+    glm::vec3 groundAmbientColor = glm::vec3(0.25f, 0.25f, 0.25f);
     glm::vec3 groundDiffuseColor = glm::vec3(0.3f, 0.8f, 0.2f); // Existing ground color
     glm::vec3 groundSpecularColor = glm::vec3(0.0f, 0.0f, 0.0f); // No specular for ground
-    float groundShininess = 0.0f;
+    float groundShininess = 0.1f;
 
     _lightingShaderProgram->setProgramUniform(_lightingShaderUniformLocations.materialAmbientColor, groundAmbientColor);
     _lightingShaderProgram->setProgramUniform(_lightingShaderUniformLocations.materialDiffuseColor, groundDiffuseColor);
@@ -742,6 +737,7 @@ void MP::run() {
         _projectionMatrix = glm::perspective(glm::radians(45.0f), aspectRatio, 0.1f, 1000.0f);
 
         glm::mat4 viewMatrix;
+        glm::mat4 projectionMatrix;
         glm::vec3 eyePosition;
 
         if (_currentCameraMode == ARCBALL) {
