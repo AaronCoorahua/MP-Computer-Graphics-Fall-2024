@@ -100,7 +100,7 @@ void Vyrme::_drawBody(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx) 
 
     _computeAndSendMatrixUniforms(bodyMtx, viewMtx, projMtx);
 
-    _setMaterialColors(_colorBody, 32.0f);
+    _setMaterialColors(_colorBody, 64.0f);
 
     CSCI441::drawSolidCube(1.0f);
 }
@@ -115,8 +115,11 @@ void Vyrme::_drawArmLeft(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMt
     armMtx = glm::translate(armMtx, glm::vec3(0.0f, -0.7f, 0.0f));
 
     armMtx = glm::scale(armMtx, glm::vec3(0.30f, 0.9f, 0.3f));
+
     _computeAndSendMatrixUniforms(armMtx, viewMtx, projMtx);
-    _setMaterialColors(_colorBody, 32.0f);
+
+    _setMaterialColors(_colorBody, 64.0f);
+
     CSCI441::drawSolidCube(1.0f);
 }
 
@@ -133,7 +136,7 @@ void Vyrme::_drawArmRight(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projM
 
     _computeAndSendMatrixUniforms(armMtx, viewMtx, projMtx);
 
-    _setMaterialColors(_colorBody, 32.0f);
+    _setMaterialColors(_colorBody, 64.0f);
 
     CSCI441::drawSolidCube(1.0f);
 }
@@ -145,7 +148,7 @@ void Vyrme::_drawHead(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx) 
 
     _computeAndSendMatrixUniforms(headMtx, viewMtx, projMtx);
 
-    _setMaterialColors(_colorHead, 64.0f);
+    _setMaterialColors(_colorHead, 16.0f);
 
     CSCI441::drawSolidSphere(1.0f, 20, 20);
 }
@@ -157,7 +160,7 @@ void Vyrme::_drawFace(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx) 
 
     _computeAndSendMatrixUniforms(faceMtx, viewMtx, projMtx);
 
-    _setMaterialColors(_colorFace, 32.0f);
+    _setMaterialColors(_colorFace, 16.0f);
 
     CSCI441::drawSolidSphere(1.0f, 20, 20);
 }
@@ -171,7 +174,7 @@ void Vyrme::_drawCones(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx)
 
     _computeAndSendMatrixUniforms(coneRightMtx, viewMtx, projMtx);
 
-    _setMaterialColors(_colorFace, 32.0f);
+    _setMaterialColors(_colorFace, 16.0f);
 
     CSCI441::drawSolidCone(1.0f, 1.0f, 20, 20);
 
@@ -195,20 +198,17 @@ void Vyrme::_drawBag(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx) c
 
     _computeAndSendMatrixUniforms(bagMtx, viewMtx, projMtx);
 
-    _setMaterialColors(_colorBag, 32.0f);
+    _setMaterialColors(_colorBag, 64.0f);
 
     CSCI441::drawSolidCube(1.0f);
 }
 
-void Vyrme::_computeAndSendMatrixUniforms(glm::mat4 modelMtx, glm::mat4 viewMtx,
-                                          glm::mat4 projMtx) const {
+void Vyrme::_computeAndSendMatrixUniforms(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx) const {
     glm::mat4 mvpMtx = projMtx * viewMtx * modelMtx;
-    glProgramUniformMatrix4fv(_shaderProgramHandle, _shaderProgramUniformLocations.mvpMtx, 1,
-                              GL_FALSE, glm::value_ptr(mvpMtx));
+    glProgramUniformMatrix4fv(_shaderProgramHandle, _shaderProgramUniformLocations.mvpMtx, 1, GL_FALSE, glm::value_ptr(mvpMtx));
 
     glm::mat3 normalMtx = glm::mat3(glm::transpose(glm::inverse(modelMtx)));
-    glProgramUniformMatrix3fv(_shaderProgramHandle, _shaderProgramUniformLocations.normalMtx, 1,
-                              GL_FALSE, glm::value_ptr(normalMtx));
+    glProgramUniformMatrix3fv(_shaderProgramHandle, _shaderProgramUniformLocations.normalMtx, 1, GL_FALSE, glm::value_ptr(normalMtx));
 }
 
 void Vyrme::_setMaterialColors(glm::vec3 color, float shininess) const {
@@ -216,11 +216,8 @@ void Vyrme::_setMaterialColors(glm::vec3 color, float shininess) const {
     glm::vec3 diffuseColor  = color;
     glm::vec3 specularColor = glm::vec3(0.5f);
 
-    glProgramUniform3fv(_shaderProgramHandle, _shaderProgramUniformLocations.materialAmbientColor, 1,
-                        glm::value_ptr(ambientColor));
-    glProgramUniform3fv(_shaderProgramHandle, _shaderProgramUniformLocations.materialDiffuseColor, 1,
-                        glm::value_ptr(diffuseColor));
-    glProgramUniform3fv(_shaderProgramHandle, _shaderProgramUniformLocations.materialSpecularColor, 1,
-                        glm::value_ptr(specularColor));
+    glProgramUniform3fv(_shaderProgramHandle, _shaderProgramUniformLocations.materialAmbientColor, 1, glm::value_ptr(ambientColor));
+    glProgramUniform3fv(_shaderProgramHandle, _shaderProgramUniformLocations.materialDiffuseColor, 1, glm::value_ptr(diffuseColor));
+    glProgramUniform3fv(_shaderProgramHandle, _shaderProgramUniformLocations.materialSpecularColor, 1, glm::value_ptr(specularColor));
     glProgramUniform1f(_shaderProgramHandle, _shaderProgramUniformLocations.materialShininess, shininess);
 }

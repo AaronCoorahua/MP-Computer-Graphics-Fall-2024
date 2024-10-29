@@ -81,15 +81,7 @@ void Ross::_drawBody(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx) c
 
     _computeAndSendMatrixUniforms(bodyMtx, viewMtx, projMtx);
 
-    glm::vec3 ambientColor  = _colorBody * 0.2f;
-    glm::vec3 diffuseColor  = _colorBody;
-    glm::vec3 specularColor = glm::vec3(0.5f);
-    float shininess         = 32.0f;
-
-    glProgramUniform3fv(_shaderProgramHandle, _shaderProgramUniformLocations.materialAmbientColor, 1, glm::value_ptr(ambientColor));
-    glProgramUniform3fv(_shaderProgramHandle, _shaderProgramUniformLocations.materialDiffuseColor, 1, glm::value_ptr(diffuseColor));
-    glProgramUniform3fv(_shaderProgramHandle, _shaderProgramUniformLocations.materialSpecularColor, 1, glm::value_ptr(specularColor));
-    glProgramUniform1f(_shaderProgramHandle, _shaderProgramUniformLocations.materialShininess, shininess);
+    _setMaterialColors(_colorBody, 32.0f);
 
     CSCI441::drawSolidCone(0.8f, 5.0f, 20, 20);
 }
@@ -101,15 +93,7 @@ void Ross::_drawHead(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx) c
 
     _computeAndSendMatrixUniforms(headMtx, viewMtx, projMtx);
 
-    glm::vec3 ambientColor  = _colorHead * 0.2f;
-    glm::vec3 diffuseColor  = _colorHead;
-    glm::vec3 specularColor = glm::vec3(0.5f);
-    float shininess         = 32.0f;
-
-    glProgramUniform3fv(_shaderProgramHandle, _shaderProgramUniformLocations.materialAmbientColor, 1, glm::value_ptr(ambientColor));
-    glProgramUniform3fv(_shaderProgramHandle, _shaderProgramUniformLocations.materialDiffuseColor, 1, glm::value_ptr(diffuseColor));
-    glProgramUniform3fv(_shaderProgramHandle, _shaderProgramUniformLocations.materialSpecularColor, 1, glm::value_ptr(specularColor));
-    glProgramUniform1f(_shaderProgramHandle, _shaderProgramUniformLocations.materialShininess, shininess);
+    _setMaterialColors(_colorHead, 32.0f);
 
     CSCI441::drawSolidSphere(1.0f, 20, 20);
 }
@@ -121,15 +105,7 @@ void Ross::_drawHat(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx) co
 
     _computeAndSendMatrixUniforms(hatMtx, viewMtx, projMtx);
 
-    glm::vec3 ambientColor  = _colorHat * 0.2f;
-    glm::vec3 diffuseColor  = _colorHat;
-    glm::vec3 specularColor = glm::vec3(0.5f);
-    float shininess         = 32.0f;
-
-    glProgramUniform3fv(_shaderProgramHandle, _shaderProgramUniformLocations.materialAmbientColor, 1, glm::value_ptr(ambientColor));
-    glProgramUniform3fv(_shaderProgramHandle, _shaderProgramUniformLocations.materialDiffuseColor, 1, glm::value_ptr(diffuseColor));
-    glProgramUniform3fv(_shaderProgramHandle, _shaderProgramUniformLocations.materialSpecularColor, 1, glm::value_ptr(specularColor));
-    glProgramUniform1f(_shaderProgramHandle, _shaderProgramUniformLocations.materialShininess, shininess);
+    _setMaterialColors(_colorHat, 32.0f);
 
     CSCI441::drawSolidCone(3.0f, 7.0f, 20, 20);
 }
@@ -142,15 +118,7 @@ void Ross::_drawBeard(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx) 
 
     _computeAndSendMatrixUniforms(beardMtx, viewMtx, projMtx);
 
-    glm::vec3 ambientColor  = _colorBeard * 0.2f;
-    glm::vec3 diffuseColor  = _colorBeard;
-    glm::vec3 specularColor = glm::vec3(0.5f);
-    float shininess         = 32.0f;
-
-    glProgramUniform3fv(_shaderProgramHandle, _shaderProgramUniformLocations.materialAmbientColor, 1, glm::value_ptr(ambientColor));
-    glProgramUniform3fv(_shaderProgramHandle, _shaderProgramUniformLocations.materialDiffuseColor, 1, glm::value_ptr(diffuseColor));
-    glProgramUniform3fv(_shaderProgramHandle, _shaderProgramUniformLocations.materialSpecularColor, 1, glm::value_ptr(specularColor));
-    glProgramUniform1f(_shaderProgramHandle, _shaderProgramUniformLocations.materialShininess, shininess);
+    _setMaterialColors(_colorBeard, 32.0f);
 
     CSCI441::drawSolidCone(1.0f, 2.0f, 20, 20);
 }
@@ -170,18 +138,7 @@ void Ross::_drawStaff(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx) 
 
     _computeAndSendMatrixUniforms(staffMtx, viewMtx, projMtx);
 
-    glm::vec3 ambientColor  = _colorStaff * 0.2f;
-    glm::vec3 diffuseColor  = _colorStaff;
-    glm::vec3 specularColor = glm::vec3(0.5f);
-    float shininess         = 32.0f;
-
-    glProgramUniform3fv(_shaderProgramHandle, _shaderProgramUniformLocations.materialAmbientColor, 1,
-                        glm::value_ptr(ambientColor));
-    glProgramUniform3fv(_shaderProgramHandle, _shaderProgramUniformLocations.materialDiffuseColor, 1,
-                        glm::value_ptr(diffuseColor));
-    glProgramUniform3fv(_shaderProgramHandle, _shaderProgramUniformLocations.materialSpecularColor, 1,
-                        glm::value_ptr(specularColor));
-    glProgramUniform1f(_shaderProgramHandle, _shaderProgramUniformLocations.materialShininess, shininess);
+    _setMaterialColors(_colorStaff, 32.0f);
 
     CSCI441::drawSolidCube(0.1f);
 }
@@ -193,4 +150,15 @@ void Ross::_computeAndSendMatrixUniforms(glm::mat4 modelMtx, glm::mat4 viewMtx, 
 
     glm::mat3 normalMtx = glm::mat3(glm::transpose(glm::inverse(modelMtx)));
     glProgramUniformMatrix3fv(_shaderProgramHandle, _shaderProgramUniformLocations.normalMtx, 1, GL_FALSE, glm::value_ptr(normalMtx));
+}
+
+void Ross::_setMaterialColors(glm::vec3 color, float shininess) const {
+    glm::vec3 ambientColor  = color * 0.2f;
+    glm::vec3 diffuseColor  = color;
+    glm::vec3 specularColor = glm::vec3(0.5f);
+
+    glProgramUniform3fv(_shaderProgramHandle, _shaderProgramUniformLocations.materialAmbientColor, 1, glm::value_ptr(ambientColor));
+    glProgramUniform3fv(_shaderProgramHandle, _shaderProgramUniformLocations.materialDiffuseColor, 1, glm::value_ptr(diffuseColor));
+    glProgramUniform3fv(_shaderProgramHandle, _shaderProgramUniformLocations.materialSpecularColor, 1, glm::value_ptr(specularColor));
+    glProgramUniform1f(_shaderProgramHandle, _shaderProgramUniformLocations.materialShininess, shininess);
 }

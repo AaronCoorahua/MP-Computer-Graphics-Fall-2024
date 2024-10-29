@@ -71,6 +71,7 @@ private:
     void _drawCarWindows(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx ) const;
 
     void _computeAndSendMatrixUniforms(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx) const;
+    void _setMaterialColors(glm::vec3 color, float shininess) const;
 };
 
 #endif //LAB05_PLANE_H

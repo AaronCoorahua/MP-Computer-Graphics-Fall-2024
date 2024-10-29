@@ -45,8 +45,7 @@ private:
     void _drawCones(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx) const;
     void _drawBag(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx) const;
 
-    void _computeAndSendMatrixUniforms(glm::mat4 modelMtx, glm::mat4 viewMtx,
-                                       glm::mat4 projMtx) const;
+    void _computeAndSendMatrixUniforms(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx) const;
     void _setMaterialColors(glm::vec3 color, float shininess) const;
 
     float _leftArmAngle = 0.0f;

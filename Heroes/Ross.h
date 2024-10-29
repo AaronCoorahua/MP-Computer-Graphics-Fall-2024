@@ -68,6 +68,7 @@ private:
     void _drawStaff(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx) const;
 
     void _computeAndSendMatrixUniforms(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx) const;
+    void _setMaterialColors(glm::vec3 color, float shininess) const;
 };
 
 #endif // Ross_h

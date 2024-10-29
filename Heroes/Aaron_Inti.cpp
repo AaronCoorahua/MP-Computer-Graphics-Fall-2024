@@ -94,15 +94,7 @@ void Aaron_Inti::_drawCarBody(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 p
 
     _computeAndSendMatrixUniforms(bodyMtx, viewMtx, projMtx);
 
-    glm::vec3 ambientColor  = _colorBody * 0.2f;
-    glm::vec3 diffuseColor  = _colorBody;
-    glm::vec3 specularColor = glm::vec3(0.5f);
-    float shininess         = 32.0f;
-
-    glProgramUniform3fv(_shaderProgramHandle, _shaderProgramUniformLocations.materialAmbientColor, 1, glm::value_ptr(ambientColor));
-    glProgramUniform3fv(_shaderProgramHandle, _shaderProgramUniformLocations.materialDiffuseColor, 1, glm::value_ptr(diffuseColor));
-    glProgramUniform3fv(_shaderProgramHandle, _shaderProgramUniformLocations.materialSpecularColor, 1, glm::value_ptr(specularColor));
-    glProgramUniform1f(_shaderProgramHandle, _shaderProgramUniformLocations.materialShininess, shininess);
+    _setMaterialColors(_colorBody, 32.0f);
 
     CSCI441::drawSolidCube(1.0f);
 }
@@ -114,15 +106,7 @@ void Aaron_Inti::_drawCarTop(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 pr
 
     _computeAndSendMatrixUniforms(topMtx, viewMtx, projMtx);
 
-    glm::vec3 ambientColor  = _colorTop * 0.2f;
-    glm::vec3 diffuseColor  = _colorTop;
-    glm::vec3 specularColor = glm::vec3(0.5f);
-    float shininess         = 16.0f;
-
-    glProgramUniform3fv(_shaderProgramHandle, _shaderProgramUniformLocations.materialAmbientColor, 1, glm::value_ptr(ambientColor));
-    glProgramUniform3fv(_shaderProgramHandle, _shaderProgramUniformLocations.materialDiffuseColor, 1, glm::value_ptr(diffuseColor));
-    glProgramUniform3fv(_shaderProgramHandle, _shaderProgramUniformLocations.materialSpecularColor, 1, glm::value_ptr(specularColor));
-    glProgramUniform1f(_shaderProgramHandle, _shaderProgramUniformLocations.materialShininess, shininess);
+    _setMaterialColors(_colorTop, 16.0f);
 
     CSCI441::drawSolidCube(1.0f);
 }
@@ -138,15 +122,7 @@ void Aaron_Inti::_drawCarWheels(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4
 
         _computeAndSendMatrixUniforms(wheelMtx, viewMtx, projMtx);
 
-        glm::vec3 ambientColor  = _colorWheel * 0.2f;
-        glm::vec3 diffuseColor  = _colorWheel;
-        glm::vec3 specularColor = glm::vec3(0.3f);
-        float shininess         = 10.0f;
-
-        glProgramUniform3fv(_shaderProgramHandle, _shaderProgramUniformLocations.materialAmbientColor, 1, glm::value_ptr(ambientColor));
-        glProgramUniform3fv(_shaderProgramHandle, _shaderProgramUniformLocations.materialDiffuseColor, 1, glm::value_ptr(diffuseColor));
-        glProgramUniform3fv(_shaderProgramHandle, _shaderProgramUniformLocations.materialSpecularColor, 1, glm::value_ptr(specularColor));
-        glProgramUniform1f(_shaderProgramHandle, _shaderProgramUniformLocations.materialShininess, shininess);
+        _setMaterialColors(_colorWheel, 10.0f);
 
         CSCI441::drawSolidCylinder(0.5f, 0.5f, 0.2f, 16, 16);
 
@@ -171,15 +147,7 @@ void Aaron_Inti::_drawCarPropeller(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::m
 
     _computeAndSendMatrixUniforms(propMtx, viewMtx, projMtx);
 
-    glm::vec3 ambientColor  = _colorProp * 0.2f;
-    glm::vec3 diffuseColor  = _colorProp;
-    glm::vec3 specularColor = glm::vec3(0.5f);
-    float shininess         = 32.0f;
-
-    glProgramUniform3fv(_shaderProgramHandle, _shaderProgramUniformLocations.materialAmbientColor, 1, glm::value_ptr(ambientColor));
-    glProgramUniform3fv(_shaderProgramHandle, _shaderProgramUniformLocations.materialDiffuseColor, 1, glm::value_ptr(diffuseColor));
-    glProgramUniform3fv(_shaderProgramHandle, _shaderProgramUniformLocations.materialSpecularColor, 1, glm::value_ptr(specularColor));
-    glProgramUniform1f(_shaderProgramHandle, _shaderProgramUniformLocations.materialShininess, shininess);
+    _setMaterialColors(_colorProp, 32.0f);
 
     CSCI441::drawSolidCube(1.0f);
 }
@@ -199,15 +167,7 @@ void Aaron_Inti::_drawCarHeadlights(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::
         lightMtx = glm::scale(lightMtx, _scaleHeadlight);
         _computeAndSendMatrixUniforms(lightMtx, viewMtx, projMtx);
 
-        glm::vec3 ambientColor  = headlightColor * 0.2f;
-        glm::vec3 diffuseColor  = headlightColor;
-        glm::vec3 specularColor = glm::vec3(0.8f);
-        float shininess         = 64.0f;
-
-        glProgramUniform3fv(_shaderProgramHandle, _shaderProgramUniformLocations.materialAmbientColor, 1, glm::value_ptr(ambientColor));
-        glProgramUniform3fv(_shaderProgramHandle, _shaderProgramUniformLocations.materialDiffuseColor, 1, glm::value_ptr(diffuseColor));
-        glProgramUniform3fv(_shaderProgramHandle, _shaderProgramUniformLocations.materialSpecularColor, 1, glm::value_ptr(specularColor));
-        glProgramUniform1f(_shaderProgramHandle, _shaderProgramUniformLocations.materialShininess, shininess);
+        _setMaterialColors(headlightColor, 64.0f);
 
         CSCI441::drawSolidCube(1.0f);
     }
@@ -223,16 +183,7 @@ void Aaron_Inti::_drawCarWindows(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat
 
         _computeAndSendMatrixUniforms(windowMtx, viewMtx, projMtx);
 
-
-        glm::vec3 ambientColor  = _colorWindow * 0.2f;
-        glm::vec3 diffuseColor  = _colorWindow;
-        glm::vec3 specularColor = glm::vec3(0.3f);
-        float shininess         = 16.0f;
-
-        glProgramUniform3fv(_shaderProgramHandle, _shaderProgramUniformLocations.materialAmbientColor, 1, glm::value_ptr(ambientColor));
-        glProgramUniform3fv(_shaderProgramHandle, _shaderProgramUniformLocations.materialDiffuseColor, 1, glm::value_ptr(diffuseColor));
-        glProgramUniform3fv(_shaderProgramHandle, _shaderProgramUniformLocations.materialSpecularColor, 1, glm::value_ptr(specularColor));
-        glProgramUniform1f(_shaderProgramHandle, _shaderProgramUniformLocations.materialShininess, shininess);
+        _setMaterialColors(_colorWindow, 16.0f);
 
         CSCI441::drawSolidCube(1.0f);
     }
@@ -244,4 +195,15 @@ void Aaron_Inti::_computeAndSendMatrixUniforms(glm::mat4 modelMtx, glm::mat4 vie
 
     glm::mat3 normalMtx = glm::mat3(glm::transpose(glm::inverse(modelMtx)));
     glProgramUniformMatrix3fv(_shaderProgramHandle, _shaderProgramUniformLocations.normalMtx, 1, GL_FALSE, glm::value_ptr(normalMtx));
+}
+
+void Aaron_Inti::_setMaterialColors(glm::vec3 color, float shininess) const {
+    glm::vec3 ambientColor  = color * 0.2f;
+    glm::vec3 diffuseColor  = color;
+    glm::vec3 specularColor = glm::vec3(0.5f);
+
+    glProgramUniform3fv(_shaderProgramHandle, _shaderProgramUniformLocations.materialAmbientColor, 1, glm::value_ptr(ambientColor));
+    glProgramUniform3fv(_shaderProgramHandle, _shaderProgramUniformLocations.materialDiffuseColor, 1, glm::value_ptr(diffuseColor));
+    glProgramUniform3fv(_shaderProgramHandle, _shaderProgramUniformLocations.materialSpecularColor, 1, glm::value_ptr(specularColor));
+    glProgramUniform1f(_shaderProgramHandle, _shaderProgramUniformLocations.materialShininess, shininess);
 }
