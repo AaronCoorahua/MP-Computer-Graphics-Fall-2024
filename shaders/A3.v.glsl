@@ -3,6 +3,7 @@
 // Uniform inputs
 uniform mat4 mvpMatrix;                 // Model-View-Projection Matrix
 uniform mat3 normalMatrix;              // Normal matrix
+uniform vec3 eyePosition;               // Eye position
 
 // Light properties
 uniform vec3 lightDirection;
@@ -16,9 +17,6 @@ uniform vec3 materialDiffuseColor;
 uniform vec3 materialSpecularColor;
 uniform float materialShininess;
 
-// Eye position
-uniform vec3 eyePosition;
-
 // Attribute inputs
 layout(location = 0) in vec3 vPos;      // Vertex position
 layout(location = 1) in vec3 vNormal;   // Vertex normal
@@ -26,18 +24,9 @@ layout(location = 1) in vec3 vNormal;   // Vertex normal
 // Varying outputs
 layout(location = 0) out vec3 color;    // Color to pass to fragment shader
 
-void main() {
-    // Transform & output the vertex in clip space
-    gl_Position = mvpMatrix * vec4(vPos, 1.0);
-
-    // Transform normal vector
-    vec3 normal = normalize(normalMatrix * vNormal);
-
+vec3 calculateDirectionalLight(vec3 normal, vec3 viewVector) {
     // Compute light vector
     vec3 lightVector = normalize(-lightDirection);
-
-    // Compute view vector
-    vec3 viewVector = normalize(eyePosition - vec3(gl_Position));
 
     // Ambient component
     vec3 ambient = lightAmbientColor * materialAmbientColor;
@@ -52,5 +41,22 @@ void main() {
     vec3 specular = lightSpecularColor * materialSpecularColor * specularFactor;
 
     // Sum all components
-    color = ambient + diffuse + specular;
+    return ambient + diffuse + specular;
+}
+
+void main() {
+    // Transform & output the vertex in clip space
+    gl_Position = mvpMatrix * vec4(vPos, 1.0);
+
+    // Transform normal vector
+    vec3 normal = normalize(normalMatrix * vNormal);
+
+    // Compute view vector
+    vec3 viewVector = normalize(eyePosition - vec3(gl_Position));
+
+    // Calculate all light sources
+    vec3 directionalLight = calculateDirectionalLight(normal, viewVector);
+
+    // Combine lighting
+    color = directionalLight;
 }
