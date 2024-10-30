@@ -5,21 +5,39 @@ uniform mat4 mvpMatrix;                 // Model-View-Projection Matrix
 uniform mat3 normalMatrix;              // Normal matrix
 uniform vec3 eyePosition;               // Eye position
 
-// Light properties
+// Attribute inputs
+layout(location = 0) in vec3 vPos;      // Vertex position
+layout(location = 1) in vec3 vNormal;   // Vertex normal
+
+// Directional Light properties
 uniform vec3 lightDirection;
 uniform vec3 lightAmbientColor;
 uniform vec3 lightDiffuseColor;
 uniform vec3 lightSpecularColor;
 
-// Material properties
+// Directional Light Material properties
 uniform vec3 materialAmbientColor;
 uniform vec3 materialDiffuseColor;
 uniform vec3 materialSpecularColor;
 uniform float materialShininess;
 
-// Attribute inputs
-layout(location = 0) in vec3 vPos;      // Vertex position
-layout(location = 1) in vec3 vNormal;   // Vertex normal
+// Point Light properties
+uniform vec3 pointLightPos;
+uniform vec3 pointLightColor;
+uniform float pointLightConstant;
+uniform float pointLightLinear;
+uniform float pointLightQuadratic;
+
+// Spotlight properties
+uniform vec3 spotLightPos;
+uniform vec3 spotLightDirection;
+uniform vec3 spotLightColor;
+uniform float spotLightCutoff;
+uniform float spotLightOuterCutoff;
+uniform float spotLightExponent;
+uniform float spotLightConstant;
+uniform float spotLightLinear;
+uniform float spotLightQuadratic;
 
 // Varying outputs
 layout(location = 0) out vec3 color;    // Color to pass to fragment shader
