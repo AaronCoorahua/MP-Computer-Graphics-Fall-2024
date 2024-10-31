@@ -349,27 +349,74 @@ void MP::mSetupScene() {
     _projectionMatrix = glm::perspective(glm::radians(45.0f), aspectRatio, 0.1f, 1000.0f);
     _cameraSpeed = glm::vec2(0.25f, 0.02f);
 
-    // Light properties
+    // Directional Light properties
     glm::vec3 lightDirection = glm::vec3(-1.0f, -1.0f, -1.0f);
     glm::vec3 lightAmbientColor = glm::vec3(0.2f, 0.2f, 0.2f);
     glm::vec3 lightDiffuseColor = glm::vec3(1.0f, 1.0f, 1.0f);
     glm::vec3 lightSpecularColor = glm::vec3(1.0f, 1.0f, 1.0f);
 
-    // Set light uniforms
+    // Direction Light uniforms
     _lightingShaderProgram->setProgramUniform(_lightingShaderUniformLocations.lightDirection, lightDirection);
     _lightingShaderProgram->setProgramUniform(_lightingShaderUniformLocations.lightAmbientColor, lightAmbientColor);
     _lightingShaderProgram->setProgramUniform(_lightingShaderUniformLocations.lightDiffuseColor, lightDiffuseColor);
     _lightingShaderProgram->setProgramUniform(_lightingShaderUniformLocations.lightSpecularColor, lightSpecularColor);
 
-    glProgramUniform3fv(_lightingShaderProgram->getShaderProgramHandle(),
-                        _lightingShaderUniformLocations.lightDirection,
-                        1,
-                        glm::value_ptr(lightDirection));
+    glProgramUniform3fv(_lightingShaderProgram->getShaderProgramHandle(), _lightingShaderUniformLocations.lightDirection, 1, glm::value_ptr(lightDirection));
+    glProgramUniform3fv(_lightingShaderProgram->getShaderProgramHandle(), _lightingShaderUniformLocations.lightAmbientColor, 1, glm::value_ptr(lightAmbientColor));
+    glProgramUniform3fv(_lightingShaderProgram->getShaderProgramHandle(), _lightingShaderUniformLocations.lightDiffuseColor, 1, glm::value_ptr(lightDiffuseColor));
+    glProgramUniform3fv(_lightingShaderProgram->getShaderProgramHandle(), _lightingShaderUniformLocations.lightSpecularColor, 1, glm::value_ptr(lightSpecularColor));
 
-    glProgramUniform3fv(_lightingShaderProgram->getShaderProgramHandle(),
-                        _lightingShaderUniformLocations.lightDiffuseColor,
-                        1,
-                        glm::value_ptr(lightDiffuseColor));
+    // Point Light properties
+    glm::vec3 pointLightPos = glm::vec3(0.0f, 5.0f, 0.0f);
+    glm::vec3 pointLightColor = glm::vec3(1.0f, 0.78f, 0.0f);
+    float pointLightConstant = 1.0f;
+    float pointLightLinear = 0.7f;
+    float pointLightQuadratic = 0.1f;
+
+    // Point Light uniforms
+    _lightingShaderProgram->setProgramUniform(_lightingShaderUniformLocations.pointLightPos, pointLightPos);
+    _lightingShaderProgram->setProgramUniform(_lightingShaderUniformLocations.pointLightColor, pointLightColor);
+    _lightingShaderProgram->setProgramUniform(_lightingShaderUniformLocations.pointLightConstant, pointLightConstant);
+    _lightingShaderProgram->setProgramUniform(_lightingShaderUniformLocations.pointLightLinear, pointLightLinear);
+    _lightingShaderProgram->setProgramUniform(_lightingShaderUniformLocations.pointLightQuadratic, pointLightQuadratic);
+
+    glProgramUniform3fv(_lightingShaderProgram->getShaderProgramHandle(), _lightingShaderUniformLocations.pointLightPos, 1, glm::value_ptr(pointLightPos));
+    glProgramUniform3fv(_lightingShaderProgram->getShaderProgramHandle(), _lightingShaderUniformLocations.pointLightColor, 1, glm::value_ptr(pointLightColor));
+    glProgramUniform1f(_lightingShaderProgram->getShaderProgramHandle(), _lightingShaderUniformLocations.pointLightConstant, pointLightConstant);
+    glProgramUniform1f(_lightingShaderProgram->getShaderProgramHandle(), _lightingShaderUniformLocations.pointLightLinear, pointLightLinear);
+    glProgramUniform1f(_lightingShaderProgram->getShaderProgramHandle(), _lightingShaderUniformLocations.pointLightQuadratic, pointLightQuadratic);
+
+    // Spotlight properties
+    glm::vec3 spotLightPos = glm::vec3(-2.0, 5.0f, -2.0f);
+    glm::vec3 spotLightDirection = glm::vec3(0.0f, -1.0f, 0.0f);
+    glm::vec3 spotLightColor = glm::vec3(0.7f, 0.7f, 0.7f);
+    float spotLightCutoff = glm::cos(glm::radians(15.0f));
+    float spotLightOuterCutoff = glm::cos(glm::radians(20.0f));
+    float spotLightExponent = 30.0f;
+    float spotLightConstant = 1.0f;
+    float spotLightLinear = 0.7f;
+    float spotLightQuadratic = 0.1f;
+
+    // Spotlight uniforms
+    _lightingShaderProgram->setProgramUniform(_lightingShaderUniformLocations.spotLightPos, spotLightPos);
+    _lightingShaderProgram->setProgramUniform(_lightingShaderUniformLocations.spotLightDirection, spotLightDirection);
+    _lightingShaderProgram->setProgramUniform(_lightingShaderUniformLocations.spotLightColor, spotLightColor);
+    _lightingShaderProgram->setProgramUniform(_lightingShaderUniformLocations.spotLightCutoff, spotLightCutoff);
+    _lightingShaderProgram->setProgramUniform(_lightingShaderUniformLocations.spotLightOuterCutoff, spotLightOuterCutoff);
+    _lightingShaderProgram->setProgramUniform(_lightingShaderUniformLocations.spotLightExponent, spotLightExponent);
+    _lightingShaderProgram->setProgramUniform(_lightingShaderUniformLocations.spotLightConstant, spotLightConstant);
+    _lightingShaderProgram->setProgramUniform(_lightingShaderUniformLocations.spotLightLinear, spotLightLinear);
+    _lightingShaderProgram->setProgramUniform(_lightingShaderUniformLocations.spotLightQuadratic, spotLightQuadratic);
+
+    glProgramUniform3fv(_lightingShaderProgram->getShaderProgramHandle(), _lightingShaderUniformLocations.spotLightPos, 1, glm::value_ptr(spotLightPos));
+    glProgramUniform3fv(_lightingShaderProgram->getShaderProgramHandle(), _lightingShaderUniformLocations.spotLightDirection, 1, glm::value_ptr(spotLightDirection));
+    glProgramUniform3fv(_lightingShaderProgram->getShaderProgramHandle(), _lightingShaderUniformLocations.spotLightColor, 1, glm::value_ptr(spotLightColor));
+    glProgramUniform1f(_lightingShaderProgram->getShaderProgramHandle(), _lightingShaderUniformLocations.spotLightCutoff, spotLightCutoff);
+    glProgramUniform1f(_lightingShaderProgram->getShaderProgramHandle(), _lightingShaderUniformLocations.spotLightOuterCutoff, spotLightOuterCutoff);
+    glProgramUniform1f(_lightingShaderProgram->getShaderProgramHandle(), _lightingShaderUniformLocations.spotLightExponent, spotLightExponent);
+    glProgramUniform1f(_lightingShaderProgram->getShaderProgramHandle(), _lightingShaderUniformLocations.spotLightConstant, spotLightConstant);
+    glProgramUniform1f(_lightingShaderProgram->getShaderProgramHandle(), _lightingShaderUniformLocations.spotLightLinear, spotLightLinear);
+    glProgramUniform1f(_lightingShaderProgram->getShaderProgramHandle(), _lightingShaderUniformLocations.spotLightQuadratic, spotLightQuadratic);
 }
 
 //*************************************************************************************
