@@ -133,23 +133,45 @@ private:
     CSCI441::ShaderProgram* _lightingShaderProgram = nullptr;   // the wrapper for our shader program
     /// \desc stores the locations of all of our shader uniforms
     struct LightingShaderUniformLocations {
+        // Vertex Shader Uniform Inputs
         GLint mvpMatrix;
         GLint normalMatrix;
+        GLint eyePosition;
+
+        // Directional Light Uniforms
         GLint lightDirection;
         GLint lightAmbientColor;
         GLint lightDiffuseColor;
         GLint lightSpecularColor;
+
+        // Directional Light Material Uniforms
         GLint materialAmbientColor;
         GLint materialDiffuseColor;
         GLint materialSpecularColor;
         GLint materialShininess;
-        GLint eyePosition;
+
+        // Point Light Uniforms
+        GLint pointLightPos;
+        GLint pointLightColor;
+        GLint pointLightConstant;
+        GLint pointLightLinear;
+        GLint pointLightQuadratic;
+
+        // Spotlight Uniforms
+        GLint spotLightPos;
+        GLint spotLightDirection;
+        GLint spotLightColor;
+        GLint spotLightCutoff;
+        GLint spotLightOuterCutoff;
+        GLint spotLightExponent;
+        GLint spotLightConstant;
+        GLint spotLightLinear;
+        GLint spotLightQuadratic;
     } _lightingShaderUniformLocations;
     /// \desc stores the locations of all of our shader attributes
     struct LightingShaderAttributeLocations {
-        /// \desc vertex position location
+        /// \desc vertex position location and normal
         GLint vPos;
-        // TODO #2: add new attributes
         GLint vNormal;
     } _lightingShaderAttributeLocations;
 
