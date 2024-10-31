@@ -7,9 +7,6 @@
 #include <ctime>
 #include <algorithm>
 
-#define STB_IMAGE_IMPLEMENTATION
-
-
 //*************************************************************************************
 //
 // Helper Functions
@@ -26,110 +23,6 @@ GLfloat getRand() {
 //*************************************************************************************
 //
 // Public Interface
-
-void MP::_setupSkybox() {
-    // Define the vertices for a cube
-    float skyboxVertices[] = {
-        // positions
-        -1.0f,  1.0f, -1.0f,
-        -1.0f, -1.0f, -1.0f,
-         1.0f, -1.0f, -1.0f,
-         1.0f, -1.0f, -1.0f,
-         1.0f,  1.0f, -1.0f,
-        -1.0f,  1.0f, -1.0f,
-
-        -1.0f, -1.0f,  1.0f,
-        -1.0f, -1.0f, -1.0f,
-        -1.0f,  1.0f, -1.0f,
-        -1.0f,  1.0f, -1.0f,
-        -1.0f,  1.0f,  1.0f,
-        -1.0f, -1.0f,  1.0f,
-
-         1.0f, -1.0f, -1.0f,
-         1.0f, -1.0f,  1.0f,
-         1.0f,  1.0f,  1.0f,
-         1.0f,  1.0f,  1.0f,
-         1.0f,  1.0f, -1.0f,
-         1.0f, -1.0f, -1.0f,
-
-        -1.0f, -1.0f,  1.0f,
-        -1.0f,  1.0f,  1.0f,
-         1.0f,  1.0f,  1.0f,
-         1.0f,  1.0f,  1.0f,
-         1.0f, -1.0f,  1.0f,
-        -1.0f, -1.0f,  1.0f,
-
-        -1.0f,  1.0f, -1.0f,
-         1.0f,  1.0f, -1.0f,
-         1.0f,  1.0f,  1.0f,
-         1.0f,  1.0f,  1.0f,
-        -1.0f,  1.0f,  1.0f,
-        -1.0f,  1.0f, -1.0f,
-
-        -1.0f, -1.0f, -1.0f,
-        -1.0f, -1.0f,  1.0f,
-         1.0f, -1.0f, -1.0f,
-         1.0f, -1.0f, -1.0f,
-        -1.0f, -1.0f,  1.0f,
-         1.0f, -1.0f,  1.0f
-    };
-
-    // Generate and bind VAO and VBO
-    glGenVertexArrays(1, &_skyboxVAO);
-    glGenBuffers(1, &_skyboxVBO);
-    glBindVertexArray(_skyboxVAO);
-    glBindBuffer(GL_ARRAY_BUFFER, _skyboxVBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(skyboxVertices), &skyboxVertices, GL_STATIC_DRAW);
-    glEnableVertexAttribArray(0); // location = 0 in skybox.v.glsl
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-    glBindVertexArray(0);
-
-    // Load skybox textures
-    std::vector<std::string> faces{
-        "textures/skybox/right.bmp",
-        "textures/skybox/left.bmp",
-        "textures/skybox/top.bmp",
-        "textures/skybox/bottom.bmp",
-        "textures/skybox/front.bmp",
-        "textures/skybox/back.bmp"
-    };
-    _skyboxTexture = loadCubemap(faces);
-
-    // Initialize skybox shader
-    _skyboxShaderProgram = new CSCI441::ShaderProgram("shaders/skybox.v.glsl", "shaders/skybox.f.glsl");
-    _skyboxShaderProgram->useProgram();
-    _skyboxShaderProgram->setProgramUniform("skybox", 0); // texture unit 0
-}
-
-GLuint MP::loadCubemap(const std::vector<std::string>& faces) {
-    GLuint textureID;
-    glGenTextures(1, &textureID);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, textureID);
-
-    int width, height, nrChannels;
-    for(GLuint i = 0; i < faces.size(); i++) {
-        unsigned char *data = stbi_load(faces[i].c_str(), &width, &height, &nrChannels, 0);
-        if (data) {
-            // Note: Assuming the images are in RGB format. Adjust if necessary.
-            glTexImage2D(
-                GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,
-                0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data
-            );
-            stbi_image_free(data);
-        }
-        else {
-            fprintf(stderr, "Cubemap texture failed to load at path: %s\n", faces[i].c_str());
-            stbi_image_free(data);
-        }
-    }
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-
-    return textureID;
-}
 
 MP::MP()
          : CSCI441::OpenGLEngine(4, 1,
@@ -346,8 +239,6 @@ void MP::mSetupShaders() {
     _lightingShaderUniformLocations.spotLightConstant       = _lightingShaderProgram->getUniformLocation("spotLightConstant");
     _lightingShaderUniformLocations.spotLightLinear         = _lightingShaderProgram->getUniformLocation("spotLightLinear");
     _lightingShaderUniformLocations.spotLightQuadratic      = _lightingShaderProgram->getUniformLocation("spotLightQuadratic");
-    
-    _setupSkybox();
 }
 
 
@@ -431,7 +322,7 @@ void MP::_generateEnvironment() {
     // Generate Trees
     for (GLfloat x = LEFT_END_POINT; x <= RIGHT_END_POINT; x += GRID_SPACING_WIDTH) {
         for (GLfloat z = BOTTOM_END_POINT; z <= TOP_END_POINT; z += GRID_SPACING_LENGTH) {
-            if (getRand() < 0.3f) { // 30% chance to place a tree
+            if (getRand() < 0.0f) { // 30% chance to place a tree
                 glm::mat4 modelMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(x, 0.0f, z));
                 TreeData tree = { modelMatrix };
                 _trees.emplace_back(tree);
@@ -442,7 +333,7 @@ void MP::_generateEnvironment() {
     // Generate Rocks
     for (GLfloat x = LEFT_END_POINT; x <= RIGHT_END_POINT; x += GRID_SPACING_WIDTH) {
         for (GLfloat z = BOTTOM_END_POINT; z <= TOP_END_POINT; z += GRID_SPACING_LENGTH) {
-            if (getRand() < 0.3f) { // 20% chance to place a rock
+            if (getRand() < 0.0f) { // 20% chance to place a rock
                 glm::mat4 modelMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(x + 2.0f, 0.0f, z + 2.0f));
                 float scale = getRand() * 2.0f + 1.0f; // Random scale between 1 and 3
                 RockData rock = { modelMatrix, scale };
@@ -557,27 +448,20 @@ void MP::mSetupScene() {
 void MP::mCleanupShaders() {
     fprintf( stdout, "[INFO]: ...deleting Shaders.\n" );
     delete _lightingShaderProgram;
-    fprintf(stdout, "[INFO]: ...deleting Skybox Shaders.\n");
-    delete _skyboxShaderProgram;
 }
 
 void MP::mCleanupBuffers() {
     fprintf( stdout, "[INFO]: ...deleting VAOs....\n" );
     CSCI441::deleteObjectVAOs();
     glDeleteVertexArrays( 1, &_groundVAO );
-    glDeleteVertexArrays(1, &_skyboxVAO);
 
     fprintf( stdout, "[INFO]: ...deleting VBOs....\n" );
     CSCI441::deleteObjectVBOs();
-    glDeleteBuffers(1, &_skyboxVBO);
 
     fprintf( stdout, "[INFO]: ...deleting models..\n" );
     delete _pPlane;
     delete _rossHero;
     delete _vyrmeHero;
-
-
-
 }
 
 //*************************************************************************************
@@ -585,24 +469,6 @@ void MP::mCleanupBuffers() {
 // Rendering / Drawing Functions - this is where the magic happens!
 
 void MP::_renderScene(glm::mat4 viewMtx, glm::mat4 projMtx, glm::vec3 eyePosition) const {
-
-    glDepthFunc(GL_LEQUAL);  // Change depth function so depth test passes when values are equal to depth buffer's content
-    _skyboxShaderProgram->useProgram();
-
-    // Remove translation from the view matrix
-    glm::mat4 view = glm::mat4(glm::mat3(viewMtx));
-
-    _skyboxShaderProgram->setProgramUniform("view", view);
-    _skyboxShaderProgram->setProgramUniform("projection", projMtx);
-
-    // skybox cube
-    glBindVertexArray(_skyboxVAO);
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, _skyboxTexture);
-    glDrawArrays(GL_TRIANGLES, 0, 36);
-    glBindVertexArray(0);
-    glDepthFunc(GL_LESS); // Set depth function bac
-
     // use our lighting shader program
     _lightingShaderProgram->useProgram();
     _lightingShaderProgram->setProgramUniform(_lightingShaderUniformLocations.eyePosition, eyePosition);
@@ -934,12 +800,6 @@ void MP::run() {
 
         GLint framebufferWidth, framebufferHeight;
         glfwGetFramebufferSize(mpWindow, &framebufferWidth, &framebufferHeight);
-
-        if (framebufferHeight == 0) {
-            fprintf(stderr, "Error: framebufferHeight is zero.\n");
-            glfwSetWindowShouldClose(mpWindow, GLFW_TRUE);
-            break;
-        }
 
         glViewport(0, 0, framebufferWidth, framebufferHeight);
         float aspectRatio = static_cast<float>(framebufferWidth) / static_cast<float>(framebufferHeight);
