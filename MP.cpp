@@ -236,8 +236,8 @@ void MP::mSetupTextures() {
     std::string facesSkyBox[6] = {
         "./HeroesSquare/negx.jpg",
         "./HeroesSquare/posx.jpg",
-        "./HeroesSquare/posy.jpg",
-        "./HeroesSquare/negy.jpg",
+        "./HeroesSquare/posy2.jpg",
+        "./HeroesSquare/negy1.jpg",
         "./HeroesSquare/negz.jpg",
         "./HeroesSquare/posz.jpg"
     };
@@ -684,7 +684,7 @@ void MP::_renderScene(glm::mat4 viewMtx, glm::mat4 projMtx, glm::vec3 eyePositio
     /// /// Begin drawing the skybox
     glDepthFunc(GL_LEQUAL); // Make sure that the sky is behind everything else in depth buffer
 
-    glm::mat4 skyBoxModelMtx = glm::scale(glm::mat4(1.0f), glm::vec3(WORLD_SIZE * 2, 100.0f, WORLD_SIZE * 2));
+    glm::mat4 skyBoxModelMtx = glm::scale(glm::mat4(1.0f), glm::vec3(WORLD_SIZE * 3, 200.0f, WORLD_SIZE * 3));
     _computeAndSendMatrixUniforms(skyBoxModelMtx, viewMtx, projMtx);
 
     glBindVertexArray(_skyBoxVAO);
@@ -695,7 +695,7 @@ void MP::_renderScene(glm::mat4 viewMtx, glm::mat4 projMtx, glm::vec3 eyePositio
 }
 
 void MP::_updateScene() {
-    float moveSpeed = 0.1f;
+    float moveSpeed = 0.4f;
     float rotateSpeed = glm::radians(1.5f);
 
     const float MIN_X = -WORLD_SIZE + 3.0f;
