@@ -2,10 +2,10 @@
 #define LAB05_LAB05_ENGINE_H
 
 #include "Cameras/ArcballCam.h"
-#include <OpenGLEngine.hpp>
-#include <ShaderProgram.hpp>
-#include "FreeCam.hpp"
-#include "FixedCam.hpp"
+#include <CSCI441/OpenGLEngine.hpp>
+#include <CSCI441/ShaderProgram.hpp>
+#include "CSCI441/FreeCam.hpp"
+#include "CSCI441/FixedCam.hpp"
 
 #include "Heroes/Aaron_Inti.h"
 #include "Heroes/Ross.h"
@@ -108,11 +108,16 @@ private:
     static constexpr GLfloat WORLD_SIZE = 55.0f;
     /// \desc VAO for our ground
     GLuint _groundVAO;
+    GLuint _skyBoxVAO;
     /// \desc the number of points that make up our ground object
     GLsizei _numGroundPoints;
+    GLsizei _numSkyBoxPoints;
 
     /// \desc creates the ground VAO
     void _createGroundBuffers();
+
+    /// \desc creates the VAO for the skybox
+    void _createSkyBoxBuffers();
 
     /// \desc smart container to store information specific to each building we wish to draw
     struct BuildingData {

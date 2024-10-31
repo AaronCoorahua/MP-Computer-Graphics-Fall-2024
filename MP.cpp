@@ -1,6 +1,6 @@
 #include "MP.h"
 
-#include <objects.hpp>
+#include <CSCI441/objects.hpp>
 
 #include <glm/gtc/type_ptr.hpp>  // for glm::value_ptr()
 
@@ -237,6 +237,7 @@ void MP::mSetupBuffers() {
 
 
     _createGroundBuffers();
+    _createSkyBoxBuffers();
     _generateEnvironment();
 }
 
@@ -267,6 +268,56 @@ void MP::_createGroundBuffers() {
     glGenBuffers(2, vbods);
     glBindBuffer(GL_ARRAY_BUFFER, vbods[0]);
     glBufferData(GL_ARRAY_BUFFER, sizeof(groundQuad), groundQuad, GL_STATIC_DRAW);
+
+    // TODO #10: hook up vertex normal attribute
+    glEnableVertexAttribArray(_lightingShaderAttributeLocations.vPos);
+    glVertexAttribPointer(_lightingShaderAttributeLocations.vPos, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)nullptr);
+
+    glEnableVertexAttribArray(_lightingShaderAttributeLocations.vNormal);
+    glVertexAttribPointer(_lightingShaderAttributeLocations.vNormal, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, normal));
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbods[1]);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+}
+
+
+
+void MP::_createSkyBoxBuffers() {
+    struct Vertex {
+        glm::vec3 position;
+        glm::vec3 normal;
+    };
+    // TODO #9: add normal data
+    Vertex skyBoxQuads[8] = {
+        {{-1.0f, -1.0f,  1.0f}, {1.0f, 0.0f, 0.0f}}, // 0
+        {{ 1.0f, -1.0f,  1.0f}, {1.0f, 0.0f, 0.0f}}, // 1
+        {{ 1.0f, -1.0f, -1.0f}, {1.0f, 0.0f, 0.0f}}, // 2
+        {{-1.0f, -1.0f, -1.0f}, {1.0f, 0.0f, 0.0f}}, // 3
+        {{-1.0f,  1.0f,  1.0f}, {1.0f, 0.0f, 0.0f}}, // 4
+        {{ 1.0f,  1.0f,  1.0f}, {1.0f, 0.0f, 0.0f}}, // 5
+        {{ 1.0f,  1.0f, -1.0f}, {1.0f, 0.0f, 0.0f}}, // 6
+        {{-1.0f,  1.0f, -1.0f}, {1.0f, 0.0f, 0.0f}}  // 7
+    };
+
+    GLushort indices[36] = {
+        0, 1, 5,  5, 4, 0, // Front
+        1, 2, 6,  6, 5, 1, // Right
+        2, 3, 7,  7, 6, 2, // Back
+        3, 0, 4,  4, 7, 3, // Left
+        4, 5, 6,  6, 7, 4, // Top
+        0, 3, 2,  2, 1, 0  // Bottom
+    };
+
+
+    _numSkyBoxPoints = 36;
+
+    glGenVertexArrays(1, &_skyBoxVAO);
+    glBindVertexArray(_skyBoxVAO);
+
+    GLuint vbods[2];       // 0 - VBO, 1 - IBO
+    glGenBuffers(2, vbods);
+    glBindBuffer(GL_ARRAY_BUFFER, vbods[0]);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(skyBoxQuads), skyBoxQuads, GL_STATIC_DRAW);
 
     // TODO #10: hook up vertex normal attribute
     glEnableVertexAttribArray(_lightingShaderAttributeLocations.vPos);
@@ -425,7 +476,30 @@ void MP::_renderScene(glm::mat4 viewMtx, glm::mat4 projMtx, glm::vec3 eyePositio
     glBindVertexArray(_groundVAO);
     glDrawElements(GL_TRIANGLE_STRIP, _numGroundPoints, GL_UNSIGNED_SHORT, (void*)0);
     //// END DRAWING THE GROUND PLANE ////
-    ///
+
+
+    /// Begin drawing the skybox
+    glm::mat4 skyBoxModelMtx = glm::scale( glm::mat4(1.0f), glm::vec3(WORLD_SIZE*2, 100.0f, WORLD_SIZE*2));
+    _computeAndSendMatrixUniforms(skyBoxModelMtx, viewMtx, projMtx);
+
+    glm::vec3 skyBoxAmbientColor = glm::vec3(0.0f, 0.0f, 0.5f);
+    glm::vec3 skyBoxDiffuseColor = glm::vec3(0.07f, 0.6f, 1.0f); // Existing sky color
+    glm::vec3 skyBoxSpecularColor = glm::vec3(0.0f, 0.0f, 0.0f); // No specular for the sky
+    float skyBoxShininess = 0.1f;
+
+    _lightingShaderProgram->setProgramUniform(_lightingShaderUniformLocations.materialAmbientColor, skyBoxAmbientColor);
+    _lightingShaderProgram->setProgramUniform(_lightingShaderUniformLocations.materialDiffuseColor, skyBoxDiffuseColor);
+    _lightingShaderProgram->setProgramUniform(_lightingShaderUniformLocations.materialSpecularColor, skyBoxSpecularColor);
+    _lightingShaderProgram->setProgramUniform(_lightingShaderUniformLocations.materialShininess, skyBoxShininess);
+
+
+    glBindVertexArray(_skyBoxVAO);
+    glDrawElements(GL_TRIANGLES, _numSkyBoxPoints, GL_UNSIGNED_SHORT, (void*)0);
+
+
+
+    ///End drawing the skybox
+
     /////// BEGIN DRAWING THE RIVER ////
     // Draw a rectangle representing the river in the middle
     glm::mat4 riverModelMtx = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.01f, 0.0f));

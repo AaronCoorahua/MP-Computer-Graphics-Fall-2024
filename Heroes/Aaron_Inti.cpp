@@ -3,8 +3,8 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-#include <objects.hpp>
-#include <OpenGLUtils.hpp>
+#include "../CSCI441/include/objects.hpp"
+#include "../CSCI441/include/OpenGLUtils.hpp"
 
 Aaron_Inti::Aaron_Inti(GLuint shaderProgramHandle, GLint mvpMtxUniformLocation, GLint normalMtxUniformLocation)
     : _shaderProgramHandle(shaderProgramHandle) {
