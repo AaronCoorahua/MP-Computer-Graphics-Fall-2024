@@ -234,12 +234,12 @@ void MP::mSetupTextures() {
 
     // Locations of all of the skybox textures
     std::string facesSkyBox[6] = {
-        "/HeroesSquare/negx.jpg",
-        "/HeroesSquare/posx.jpg",
-        "/HeroesSquare/negy.jpg",
-        "/HeroesSquare/posy.jpg",
-        "/HeroesSquare/negz.jpg",
-        "/HeroesSquare/posz.jpg"
+        "./HeroesSquare/negx.jpg",
+        "./HeroesSquare/posx.jpg",
+        "./HeroesSquare/posy.jpg",
+        "./HeroesSquare/negy.jpg",
+        "./HeroesSquare/negz.jpg",
+        "./HeroesSquare/posz.jpg"
     };
 
     // Create the texture
@@ -483,11 +483,6 @@ void MP::mSetupScene() {
                         glm::value_ptr(lightDiffuseColor));
 
 
-
-
-
-
-
 }
 
 //*************************************************************************************
@@ -682,29 +677,20 @@ void MP::_renderScene(glm::mat4 viewMtx, glm::mat4 projMtx, glm::vec3 eyePositio
     //// END DRAWING VYRME ////
 
     ///Switch shaders
-    _lightingShaderProgram->useProgram();
+    _textureShaderProgram->useProgram();
+
+
 
     /// /// Begin drawing the skybox
+    glDepthFunc(GL_LEQUAL); // Make sure that the sky is behind everything else in depth buffer
+
     glm::mat4 skyBoxModelMtx = glm::scale(glm::mat4(1.0f), glm::vec3(WORLD_SIZE * 2, 100.0f, WORLD_SIZE * 2));
     _computeAndSendMatrixUniforms(skyBoxModelMtx, viewMtx, projMtx);
-
-    glm::vec3 skyBoxAmbientColor = glm::vec3(0.0f, 0.0f, 0.5f);
-    glm::vec3 skyBoxDiffuseColor = glm::vec3(0.07f, 0.6f, 1.0f); // Existing sky color
-    glm::vec3 skyBoxSpecularColor = glm::vec3(0.0f, 0.0f, 0.0f); // No specular for the sky
-    float skyBoxShininess = 0.1f;
-
-    _lightingShaderProgram->setProgramUniform(_lightingShaderUniformLocations.materialAmbientColor, skyBoxAmbientColor);
-    _lightingShaderProgram->setProgramUniform(_lightingShaderUniformLocations.materialDiffuseColor, skyBoxDiffuseColor);
-    _lightingShaderProgram->setProgramUniform(_lightingShaderUniformLocations.materialSpecularColor,
-                                              skyBoxSpecularColor);
-    _lightingShaderProgram->setProgramUniform(_lightingShaderUniformLocations.materialShininess, skyBoxShininess);
-
 
     glBindVertexArray(_skyBoxVAO);
     glDrawElements(GL_TRIANGLES, _numSkyBoxPoints, GL_UNSIGNED_SHORT, (void *) 0);
 
-
-
+    glDepthFunc(GL_LESS); // Disable the depth buffer thing from earlier
     ///End drawing the skybox
 }
 
