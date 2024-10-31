@@ -389,8 +389,8 @@ void MP::mSetupScene() {
     glProgramUniform3fv(_lightingShaderProgram->getShaderProgramHandle(), _lightingShaderUniformLocations.lightSpecularColor, 1, glm::value_ptr(lightSpecularColor));
 
     // Point Light properties
-    glm::vec3 pointLightPos = glm::vec3(0.0f, 5.0f, 0.0f);
-    glm::vec3 pointLightColor = glm::vec3(1.0f, 0.94f, 0.68f);
+    glm::vec3 pointLightPos = glm::vec3(0.0f, 2.0f, 0.0f);
+    glm::vec3 pointLightColor = glm::vec3(0.9f, 0.8f, 0.4f);
     float pointLightConstant = 1.0f;
     float pointLightLinear = 0.7f;
     float pointLightQuadratic = 0.1f;
@@ -409,7 +409,7 @@ void MP::mSetupScene() {
     glProgramUniform1f(_lightingShaderProgram->getShaderProgramHandle(), _lightingShaderUniformLocations.pointLightQuadratic, pointLightQuadratic);
 
     // Spotlight properties
-    glm::vec3 spotLightPos = glm::vec3(-2.0, 5.0f, -2.0f);
+    glm::vec3 spotLightPos = glm::vec3(-2.0f, 5.0f, -2.0f);
     glm::vec3 spotLightDirection = glm::vec3(0.0f, -1.0f, 0.0f);
     glm::vec3 spotLightColor = glm::vec3(0.7f, 0.7f, 0.7f);
     float spotLightCutoff = glm::cos(glm::radians(15.0f));
