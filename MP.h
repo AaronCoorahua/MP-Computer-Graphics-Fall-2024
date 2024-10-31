@@ -10,6 +10,8 @@
 #include "Heroes/Aaron_Inti.h"
 #include "Heroes/Ross.h"
 #include "Heroes/Vyrme_Balargon.h"
+#include "stb_image.h"
+#include <glad/gl.h>
 
 #include <vector>
 
@@ -208,6 +210,20 @@ private:
 
     Character _smallViewportCharacter;
     static constexpr int NUM_CHARACTERS = 3;
+
+
+    // Skybox components
+    GLuint _skyboxVAO, _skyboxVBO;
+    GLuint _skyboxTexture;
+    CSCI441::ShaderProgram* _skyboxShaderProgram = nullptr;
+
+    // Function to load cubemap textures
+    GLuint loadCubemap(const std::vector<std::string>& faces);
+
+    // Function to setup skybox geometry
+    void _setupSkybox();
+
+
 };
 
 void A3_engine_keyboard_callback(GLFWwindow *window, int key, int scancode, int action, int mods );
