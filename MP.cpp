@@ -6,6 +6,8 @@
 
 #include <ctime>
 #include <algorithm>
+#include <iostream>
+#include <stb_image.h>
 
 //*************************************************************************************
 //
@@ -198,6 +200,7 @@ void MP::mSetupOpenGL() {
 }
 
 void MP::mSetupShaders() {
+    // Set up lighting shader
     _lightingShaderProgram = new CSCI441::ShaderProgram("shaders/A3.v.glsl", "shaders/A3.f.glsl" );
 
     _lightingShaderUniformLocations.mvpMatrix      = _lightingShaderProgram->getUniformLocation("mvpMatrix");
@@ -217,8 +220,68 @@ void MP::mSetupShaders() {
 
     _lightingShaderAttributeLocations.vPos    = _lightingShaderProgram->getAttributeLocation("vPos");
     _lightingShaderAttributeLocations.vNormal = _lightingShaderProgram->getAttributeLocation("vNormal");
+
+    // Set up texturing shader for skybox
+    _textureShaderProgram = new CSCI441::ShaderProgram("shaders/A3textured.v.glsl", "shaders/A3textured.f.glsl" );
+
+    _textureShaderUniformLocations.mvpMatrix      = _textureShaderProgram->getUniformLocation("mvpMatrix");
+    _textureShaderAttributeLocations.vPos    = _textureShaderProgram->getAttributeLocation("vPos");
+
 }
 
+
+void MP::mSetupTextures() {
+
+    // Locations of all of the skybox textures
+    std::string facesSkyBox[6] = {
+        "/HeroesSquare/negx.jpg",
+        "/HeroesSquare/posx.jpg",
+        "/HeroesSquare/negy.jpg",
+        "/HeroesSquare/posy.jpg",
+        "/HeroesSquare/negz.jpg",
+        "/HeroesSquare/posz.jpg"
+    };
+
+    // Create the texture
+    unsigned int skyBoxTextureID;
+    glGenTextures(1, &skyBoxTextureID);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, skyBoxTextureID);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP,GL_TEXTURE_WRAP_S,GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP,GL_TEXTURE_WRAP_T,GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP,GL_TEXTURE_WRAP_R,GL_CLAMP_TO_EDGE);
+
+    // Load all 6 textures from the list
+    for (unsigned int i = 0; i < 6; i++)
+    {
+        int width, height, nrChannels;
+        unsigned char* data = stbi_load(facesSkyBox[i].c_str(), &width, &height, &nrChannels, 0);
+        if (data)
+        {
+            stbi_set_flip_vertically_on_load(false);
+            glTexImage2D
+            (
+                GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,
+                0,
+                GL_RGB,
+                width,
+                height,
+                0,
+                GL_RGB,
+                GL_UNSIGNED_BYTE,
+                data
+            );
+            stbi_image_free(data);
+        }
+        else
+        {
+            std::cout << "Failed to load texture: " << facesSkyBox[i] << std::endl;
+            stbi_image_free(data);
+        }
+    }
+
+}
 
 void MP::mSetupBuffers() {
     CSCI441::setVertexAttributeLocations(_lightingShaderAttributeLocations.vPos, _lightingShaderAttributeLocations.vNormal);
@@ -319,12 +382,9 @@ void MP::_createSkyBoxBuffers() {
     glBindBuffer(GL_ARRAY_BUFFER, vbods[0]);
     glBufferData(GL_ARRAY_BUFFER, sizeof(skyBoxQuads), skyBoxQuads, GL_STATIC_DRAW);
 
-    // TODO #10: hook up vertex normal attribute
-    glEnableVertexAttribArray(_lightingShaderAttributeLocations.vPos);
-    glVertexAttribPointer(_lightingShaderAttributeLocations.vPos, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)nullptr);
-
-    glEnableVertexAttribArray(_lightingShaderAttributeLocations.vNormal);
-    glVertexAttribPointer(_lightingShaderAttributeLocations.vNormal, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, normal));
+    // TODO #10: hook up position attribute
+    glEnableVertexAttribArray(_textureShaderAttributeLocations.vPos);
+    glVertexAttribPointer(_textureShaderAttributeLocations.vPos, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)nullptr);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbods[1]);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
@@ -421,6 +481,13 @@ void MP::mSetupScene() {
                         _lightingShaderUniformLocations.lightDiffuseColor,
                         1,
                         glm::value_ptr(lightDiffuseColor));
+
+
+
+
+
+
+
 }
 
 //*************************************************************************************
@@ -430,6 +497,7 @@ void MP::mSetupScene() {
 void MP::mCleanupShaders() {
     fprintf( stdout, "[INFO]: ...deleting Shaders.\n" );
     delete _lightingShaderProgram;
+    delete _textureShaderProgram;
 }
 
 void MP::mCleanupBuffers() {
@@ -478,27 +546,7 @@ void MP::_renderScene(glm::mat4 viewMtx, glm::mat4 projMtx, glm::vec3 eyePositio
     //// END DRAWING THE GROUND PLANE ////
 
 
-    /// Begin drawing the skybox
-    glm::mat4 skyBoxModelMtx = glm::scale( glm::mat4(1.0f), glm::vec3(WORLD_SIZE*2, 100.0f, WORLD_SIZE*2));
-    _computeAndSendMatrixUniforms(skyBoxModelMtx, viewMtx, projMtx);
 
-    glm::vec3 skyBoxAmbientColor = glm::vec3(0.0f, 0.0f, 0.5f);
-    glm::vec3 skyBoxDiffuseColor = glm::vec3(0.07f, 0.6f, 1.0f); // Existing sky color
-    glm::vec3 skyBoxSpecularColor = glm::vec3(0.0f, 0.0f, 0.0f); // No specular for the sky
-    float skyBoxShininess = 0.1f;
-
-    _lightingShaderProgram->setProgramUniform(_lightingShaderUniformLocations.materialAmbientColor, skyBoxAmbientColor);
-    _lightingShaderProgram->setProgramUniform(_lightingShaderUniformLocations.materialDiffuseColor, skyBoxDiffuseColor);
-    _lightingShaderProgram->setProgramUniform(_lightingShaderUniformLocations.materialSpecularColor, skyBoxSpecularColor);
-    _lightingShaderProgram->setProgramUniform(_lightingShaderUniformLocations.materialShininess, skyBoxShininess);
-
-
-    glBindVertexArray(_skyBoxVAO);
-    glDrawElements(GL_TRIANGLES, _numSkyBoxPoints, GL_UNSIGNED_SHORT, (void*)0);
-
-
-
-    ///End drawing the skybox
 
     /////// BEGIN DRAWING THE RIVER ////
     // Draw a rectangle representing the river in the middle
@@ -632,6 +680,32 @@ void MP::_renderScene(glm::mat4 viewMtx, glm::mat4 projMtx, glm::vec3 eyePositio
     modelVyrmeMtx = glm::rotate(modelVyrmeMtx, _vyrmeHeading, CSCI441::Y_AXIS);
     _vyrmeHero->drawVehicle(modelVyrmeMtx, viewMtx, projMtx );
     //// END DRAWING VYRME ////
+
+    ///Switch shaders
+    _lightingShaderProgram->useProgram();
+
+    /// /// Begin drawing the skybox
+    glm::mat4 skyBoxModelMtx = glm::scale(glm::mat4(1.0f), glm::vec3(WORLD_SIZE * 2, 100.0f, WORLD_SIZE * 2));
+    _computeAndSendMatrixUniforms(skyBoxModelMtx, viewMtx, projMtx);
+
+    glm::vec3 skyBoxAmbientColor = glm::vec3(0.0f, 0.0f, 0.5f);
+    glm::vec3 skyBoxDiffuseColor = glm::vec3(0.07f, 0.6f, 1.0f); // Existing sky color
+    glm::vec3 skyBoxSpecularColor = glm::vec3(0.0f, 0.0f, 0.0f); // No specular for the sky
+    float skyBoxShininess = 0.1f;
+
+    _lightingShaderProgram->setProgramUniform(_lightingShaderUniformLocations.materialAmbientColor, skyBoxAmbientColor);
+    _lightingShaderProgram->setProgramUniform(_lightingShaderUniformLocations.materialDiffuseColor, skyBoxDiffuseColor);
+    _lightingShaderProgram->setProgramUniform(_lightingShaderUniformLocations.materialSpecularColor,
+                                              skyBoxSpecularColor);
+    _lightingShaderProgram->setProgramUniform(_lightingShaderUniformLocations.materialShininess, skyBoxShininess);
+
+
+    glBindVertexArray(_skyBoxVAO);
+    glDrawElements(GL_TRIANGLES, _numSkyBoxPoints, GL_UNSIGNED_SHORT, (void *) 0);
+
+
+
+    ///End drawing the skybox
 }
 
 void MP::_updateScene() {

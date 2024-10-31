@@ -60,6 +60,7 @@ private:
     void mSetupShaders() final;
     void mSetupBuffers() final;
     void mSetupScene() final;
+    void mSetupTextures() final;
 
     void mCleanupBuffers() final;
     void mCleanupShaders() final;
@@ -113,6 +114,20 @@ private:
     GLsizei _numGroundPoints;
     GLsizei _numSkyBoxPoints;
 
+
+    // Texture stuff
+    /// \desc total number of textures in our scene
+    static constexpr GLuint NUM_TEXTURES = 2;
+    /// \desc used to index through our texture array to give named access
+    enum TEXTURE_ID {
+        /// \desc the texture for the skybox
+        SKYBOX = 0,
+        /// \desc white texture for the non-textured objects
+        NON_TEXTURED = 1
+    };
+    /// \desc texture handles for our textures
+    GLuint _texHandles[NUM_TEXTURES];
+
     /// \desc creates the ground VAO
     void _createGroundBuffers();
 
@@ -155,6 +170,29 @@ private:
         // TODO #2: add new attributes
         GLint vNormal;
     } _lightingShaderAttributeLocations;
+
+
+
+    /// \desc shader program that performs texturing
+    CSCI441::ShaderProgram* _textureShaderProgram;
+    /// \desc stores the locations of all of our shader uniforms
+    struct TextureShaderUniformLocations {
+        /// \desc precomputed MVP matrix location
+        GLint mvpMatrix;
+        // TODO #11 - texture map
+        GLint texMap;
+    } _textureShaderUniformLocations;
+    /// \desc stores the locations of all of our shader attributes
+    struct TextureShaderAttributeLocations {
+        /// \desc vertex position location
+        GLint vPos;
+        /// \desc vertex normal location
+        /// \note not used in this lab
+        GLint vNormal;
+        // TODO #10 - texture coordinate
+        GLint texCoord;
+    } _textureShaderAttributeLocations;
+
 
     /// \desc precomputes the matrix uniforms CPU-side and then sends them
     /// to the GPU to be used in the shader for each vertex.  It is more efficient
