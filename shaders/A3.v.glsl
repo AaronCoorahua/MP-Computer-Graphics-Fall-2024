@@ -9,17 +9,17 @@ uniform vec3 eyePosition;               // Eye position
 layout(location = 0) in vec3 vPos;      // Vertex position
 layout(location = 1) in vec3 vNormal;   // Vertex normal
 
+// Material properties
+uniform vec3 materialAmbientColor;
+uniform vec3 materialDiffuseColor;
+uniform vec3 materialSpecularColor;
+uniform float materialShininess;
+
 // Directional Light properties
 uniform vec3 lightDirection;
 uniform vec3 lightAmbientColor;
 uniform vec3 lightDiffuseColor;
 uniform vec3 lightSpecularColor;
-
-// Directional Light Material properties
-uniform vec3 materialAmbientColor;
-uniform vec3 materialDiffuseColor;
-uniform vec3 materialSpecularColor;
-uniform float materialShininess;
 
 // Point Light properties
 uniform vec3 pointLightPos;

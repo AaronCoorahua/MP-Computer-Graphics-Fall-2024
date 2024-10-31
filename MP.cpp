@@ -26,7 +26,7 @@ GLfloat getRand() {
 
 MP::MP()
          : CSCI441::OpenGLEngine(4, 1,
-                                 640, 480,
+                                 1920, 1080,
                                  "MP: Over Hill and Under Hill"),
                                 _isShiftPressed(false),
                                 _isLeftMouseButtonPressed(false),
@@ -198,25 +198,47 @@ void MP::mSetupOpenGL() {
 }
 
 void MP::mSetupShaders() {
+    // Get the Shader Program
     _lightingShaderProgram = new CSCI441::ShaderProgram("shaders/A3.v.glsl", "shaders/A3.f.glsl" );
 
+    // General Shader Uniforms
     _lightingShaderUniformLocations.mvpMatrix      = _lightingShaderProgram->getUniformLocation("mvpMatrix");
     _lightingShaderUniformLocations.normalMatrix   = _lightingShaderProgram->getUniformLocation("normalMatrix");
+    _lightingShaderUniformLocations.eyePosition = _lightingShaderProgram->getUniformLocation("eyePosition");
 
-    _lightingShaderUniformLocations.lightDirection     = _lightingShaderProgram->getUniformLocation("lightDirection");
-    _lightingShaderUniformLocations.lightAmbientColor  = _lightingShaderProgram->getUniformLocation("lightAmbientColor");
-    _lightingShaderUniformLocations.lightDiffuseColor  = _lightingShaderProgram->getUniformLocation("lightDiffuseColor");
-    _lightingShaderUniformLocations.lightSpecularColor = _lightingShaderProgram->getUniformLocation("lightSpecularColor");
+    // General Shader Attributes
+    _lightingShaderAttributeLocations.vPos    = _lightingShaderProgram->getAttributeLocation("vPos");
+    _lightingShaderAttributeLocations.vNormal = _lightingShaderProgram->getAttributeLocation("vNormal");
 
+    // Material Colors
     _lightingShaderUniformLocations.materialAmbientColor   = _lightingShaderProgram->getUniformLocation("materialAmbientColor");
     _lightingShaderUniformLocations.materialDiffuseColor   = _lightingShaderProgram->getUniformLocation("materialDiffuseColor");
     _lightingShaderUniformLocations.materialSpecularColor  = _lightingShaderProgram->getUniformLocation("materialSpecularColor");
     _lightingShaderUniformLocations.materialShininess      = _lightingShaderProgram->getUniformLocation("materialShininess");
 
-    _lightingShaderUniformLocations.eyePosition = _lightingShaderProgram->getUniformLocation("eyePosition");
+    // Directional Light Uniforms
+    _lightingShaderUniformLocations.lightDirection     = _lightingShaderProgram->getUniformLocation("lightDirection");
+    _lightingShaderUniformLocations.lightAmbientColor  = _lightingShaderProgram->getUniformLocation("lightAmbientColor");
+    _lightingShaderUniformLocations.lightDiffuseColor  = _lightingShaderProgram->getUniformLocation("lightDiffuseColor");
+    _lightingShaderUniformLocations.lightSpecularColor = _lightingShaderProgram->getUniformLocation("lightSpecularColor");
 
-    _lightingShaderAttributeLocations.vPos    = _lightingShaderProgram->getAttributeLocation("vPos");
-    _lightingShaderAttributeLocations.vNormal = _lightingShaderProgram->getAttributeLocation("vNormal");
+    // Point Light Uniforms
+    _lightingShaderUniformLocations.pointLightPos       = _lightingShaderProgram->getUniformLocation("pointLightPos");
+    _lightingShaderUniformLocations.pointLightColor     = _lightingShaderProgram->getUniformLocation("pointLightColor");
+    _lightingShaderUniformLocations.pointLightConstant  = _lightingShaderProgram->getUniformLocation("pointLightConstant");
+    _lightingShaderUniformLocations.pointLightLinear    = _lightingShaderProgram->getUniformLocation("pointLightLinear");
+    _lightingShaderUniformLocations.pointLightQuadratic = _lightingShaderProgram->getUniformLocation("pointLightQuadratic");
+
+    // Spotlight Uniforms
+    _lightingShaderUniformLocations.spotLightPos            = _lightingShaderProgram->getUniformLocation("spotLightPos");
+    _lightingShaderUniformLocations.spotLightDirection      = _lightingShaderProgram->getUniformLocation("spotLightDirection");
+    _lightingShaderUniformLocations.spotLightColor          = _lightingShaderProgram->getUniformLocation("spotLightColor");
+    _lightingShaderUniformLocations.spotLightCutoff         = _lightingShaderProgram->getUniformLocation("spotLightCutoff");
+    _lightingShaderUniformLocations.spotLightOuterCutoff    = _lightingShaderProgram->getUniformLocation("spotLightOuterCutoff");
+    _lightingShaderUniformLocations.spotLightExponent       = _lightingShaderProgram->getUniformLocation("spotLightExponent");
+    _lightingShaderUniformLocations.spotLightConstant       = _lightingShaderProgram->getUniformLocation("spotLightConstant");
+    _lightingShaderUniformLocations.spotLightLinear         = _lightingShaderProgram->getUniformLocation("spotLightLinear");
+    _lightingShaderUniformLocations.spotLightQuadratic      = _lightingShaderProgram->getUniformLocation("spotLightQuadratic");
 }
 
 
@@ -368,7 +390,7 @@ void MP::mSetupScene() {
 
     // Point Light properties
     glm::vec3 pointLightPos = glm::vec3(0.0f, 5.0f, 0.0f);
-    glm::vec3 pointLightColor = glm::vec3(1.0f, 0.78f, 0.0f);
+    glm::vec3 pointLightColor = glm::vec3(1.0f, 0.94f, 0.68f);
     float pointLightConstant = 1.0f;
     float pointLightLinear = 0.7f;
     float pointLightQuadratic = 0.1f;
