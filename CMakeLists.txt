@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.14)
-project(A3)
+project(MP)
 set(CMAKE_CXX_STANDARD 17)
 set(SOURCE_FILES main.cpp MP.cpp MP.h Heroes/Aaron_Inti.cpp Heroes/Aaron_Inti.h
         Cameras/Arcballcam.h

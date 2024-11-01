@@ -2,7 +2,7 @@
 
 #include <objects.hpp>
 
-#include <glm/gtc/type_ptr.hpp>  // for glm::value_ptr()
+#include <glm/gtc/type_ptr.hpp>
 
 #include <ctime>
 #include <algorithm>
@@ -47,13 +47,13 @@ MP::MP()
     _rossFirstPersonCam = new CSCI441::FreeCam();
     _vyrmeFirstPersonCam = new CSCI441::FreeCam();
 
-    // Solicitar la ruta del archivo de animación al usuario
+    // Ask for the animation txt path
     std::string animationFilePath;
-    std::cout << "Select the animation path: ";
+    std::cout << "Select the animation .txt path: ";
     std::cin >> animationFilePath;
 
     if (!_loadCameraAnimation(animationFilePath)) {
-        std::cerr << "WARNING: Animation file can not be loaded: " << animationFilePath << std::endl;
+        std::cerr << "WARNING: Animation file can't be loaded: " << animationFilePath << std::endl;
     }
 }
 MP::~MP() {
@@ -127,7 +127,7 @@ void MP::handleKeyEvent(GLint key, GLint action) {
                     _currentAnimationFrame = 0;
                     _animationTime = 0.0f;
                 } else {
-                    std::cerr << "Advertencia: No hay cuadros de animación cargados." << std::endl;
+                    std::cerr << "Warning: there is no frames loaded." << std::endl;
                 }
                 break;
 
@@ -135,10 +135,10 @@ void MP::handleKeyEvent(GLint key, GLint action) {
             case GLFW_KEY_RIGHT:
                 if (_currentCameraMode == FREE_CAM && _isSmallViewportActive) {
                     if (key == GLFW_KEY_LEFT) {
-                        // Cambiar al personaje anterior
+                        // Prev character
                         _smallViewportCharacter = static_cast<Character>((_smallViewportCharacter + NUM_CHARACTERS - 1) % NUM_CHARACTERS);
                     } else if (key == GLFW_KEY_RIGHT) {
-                        // Cambiar al siguiente personaje
+                        // Next character
                         _smallViewportCharacter = static_cast<Character>((_smallViewportCharacter + 1) % NUM_CHARACTERS);
                     }
                 }
@@ -188,7 +188,7 @@ void MP::handleCursorPositionEvent(glm::vec2 currMousePosition) {
         if (_currentCameraMode == ARCBALL) {
             if (_isShiftPressed) {
                 // Zoom in ArcballCam
-                float sensitivity = 1.0f; // Adjust sensitivity as needed
+                float sensitivity = 1.0f; // Adjust sensitivity
                 _arcballCam->zoom(deltaY * sensitivity);
             } else {
                 // Rotate ArcballCam
@@ -196,7 +196,7 @@ void MP::handleCursorPositionEvent(glm::vec2 currMousePosition) {
             }
         } else if (_currentCameraMode == FREE_CAM) {
             // Rotate FreeCam
-            float sensitivity = 0.005f; // Adjust sensitivity as needed
+            float sensitivity = 0.005f; // Adjust sensitivity
             _freeCam->setTheta(_freeCam->getTheta() + deltaX * sensitivity);
             _freeCam->setPhi(_freeCam->getPhi() - deltaY * sensitivity);
             _freeCam->recomputeOrientation();
@@ -300,13 +300,10 @@ void MP::mSetupBuffers() {
 
 
 void MP::_createGroundBuffers() {
-    // TODO #8: expand our struct
     struct Vertex {
         glm::vec3 position;
         glm::vec3 normal;
     };
-
-    // TODO #9: add normal data
     Vertex groundQuad[4] = {
         { {-1.0f, 0.0f, -1.0f}, {0.0f, 1.0f, 0.0f} },
         { { 1.0f, 0.0f, -1.0f}, {0.0f, 1.0f, 0.0f} },
@@ -321,7 +318,7 @@ void MP::_createGroundBuffers() {
     glGenVertexArrays(1, &_groundVAO);
     glBindVertexArray(_groundVAO);
 
-    GLuint vbods[2];       // 0 - VBO, 1 - IBO
+    GLuint vbods[2];
     glGenBuffers(2, vbods);
     glBindBuffer(GL_ARRAY_BUFFER, vbods[0]);
     glBufferData(GL_ARRAY_BUFFER, sizeof(groundQuad), groundQuad, GL_STATIC_DRAW);
@@ -560,7 +557,7 @@ void MP::_renderScene(glm::mat4 viewMtx, glm::mat4 projMtx, glm::vec3 eyePositio
     _computeAndSendMatrixUniforms(riverModelMtx, viewMtx, projMtx);
 
     glm::vec3 riverAmbientColor = glm::vec3(0.1f, 0.1f, 0.1f);
-    glm::vec3 riverDiffuseColor = glm::vec3(0.4f, 0.8f, 1.0f); // Existing river color
+    glm::vec3 riverDiffuseColor = glm::vec3(0.4f, 0.8f, 1.0f);
     glm::vec3 riverSpecularColor = glm::vec3(0.5f, 0.5f, 0.5f);
     float riverShininess = 64.0f;
 
@@ -616,7 +613,6 @@ void MP::_renderScene(glm::mat4 viewMtx, glm::mat4 projMtx, glm::vec3 eyePositio
     //// BEGIN DRAWING THE ROCKS ////
     for (const RockData& rock : _rocks) {
         glm::mat4 modelMtx = rock.modelMatrix;
-        // Use the stored scale
         float scale = rock.scale;
         modelMtx = glm::translate(modelMtx, glm::vec3(0.0f, scale / 2.0f, 0.0f)); // Raise the rock
         modelMtx = glm::scale(modelMtx, glm::vec3(scale, scale, scale)); // Scale the rock
@@ -636,7 +632,7 @@ void MP::_renderScene(glm::mat4 viewMtx, glm::mat4 projMtx, glm::vec3 eyePositio
 
     //// BEGIN DRAWING THE CAR ////
     glm::vec3 heroAmbientColor = glm::vec3(0.1f, 0.0f, 0.0f);
-    glm::vec3 heroDiffuseColor = glm::vec3(0.7f, 0.0f, 0.0f); // Red color
+    glm::vec3 heroDiffuseColor = glm::vec3(0.7f, 0.0f, 0.0f);
     glm::vec3 heroSpecularColor = glm::vec3(1.0f, 1.0f, 1.0f);
     float heroShininess = 32.0f;
 
@@ -654,7 +650,7 @@ void MP::_renderScene(glm::mat4 viewMtx, glm::mat4 projMtx, glm::vec3 eyePositio
 
     //// BEGIN DRAWING ROSS ////
     glm::vec3 RossAmbientColor = glm::vec3(0.1f, 0.0f, 0.0f);
-    glm::vec3 RossDiffuseColor = glm::vec3(0.7f, 0.0f, 0.0f); // Red color
+    glm::vec3 RossDiffuseColor = glm::vec3(0.7f, 0.0f, 0.0f);
     glm::vec3 RossSpecularColor = glm::vec3(1.0f, 1.0f, 1.0f);
     float RossShininess = 32.0f;
 
@@ -671,7 +667,7 @@ void MP::_renderScene(glm::mat4 viewMtx, glm::mat4 projMtx, glm::vec3 eyePositio
 
     //// BEGIN DRAWING VYRME ////
     glm::vec3 VyrmeAmbientColor = glm::vec3(0.1f, 0.0f, 0.0f);
-    glm::vec3 VyrmeDiffuseColor = glm::vec3(0.7f, 0.0f, 0.0f); // Red color
+    glm::vec3 VyrmeDiffuseColor = glm::vec3(0.7f, 0.0f, 0.0f);
     glm::vec3 VyrmeSpecularColor = glm::vec3(1.0f, 1.0f, 1.0f);
     float VyrmeShininess = 32.0f;
 
@@ -706,7 +702,7 @@ void MP::_updateScene(float deltaTime) {
     } else if (_currentCameraMode == ANIMATED_CAM && _isAnimating) {
         _animationTime += deltaTime;
 
-        while (_animationTime >= _frameDuration && _isAnimating) {
+        while (_animationTime >= _frameDuration) {
             _animationTime -= _frameDuration;
             _currentAnimationFrame++;
 
@@ -721,7 +717,7 @@ void MP::_updateScene(float deltaTime) {
             }
         }
 
-        if (_isAnimating && _currentAnimationFrame < _cameraAnimationFrames.size()) {
+        if (_currentAnimationFrame < _cameraAnimationFrames.size()) {
             const CameraFrame& frame = _cameraAnimationFrames[_currentAnimationFrame];
             glm::vec3 lookAtPoint = frame.eye + frame.direction;
             _arcballCam->setCameraView(frame.eye, lookAtPoint, frame.up);
@@ -772,7 +768,6 @@ void MP::_updateScene(float deltaTime) {
                 _updateIntiFirstPersonCamera();
                 break;
             }
-
             case ROSS: {
                 if (_keys[GLFW_KEY_W]) {
                     glm::vec3 direction(
@@ -818,7 +813,6 @@ void MP::_updateScene(float deltaTime) {
                 _updateRossFirstPersonCamera();
                 break;
             }
-
             case VYRME: {
                 if (_keys[GLFW_KEY_W]) {
                     glm::vec3 direction(
@@ -850,7 +844,6 @@ void MP::_updateScene(float deltaTime) {
                 if (_keys[GLFW_KEY_D]) {
                     _vyrmeHeading -= rotateSpeed;
                 }
-
                 if (_vyrmeHeading > glm::two_pi<float>())
                     _vyrmeHeading -= glm::two_pi<float>();
                 else if (_vyrmeHeading < 0.0f)
@@ -864,7 +857,6 @@ void MP::_updateScene(float deltaTime) {
                 _updateVyrmeFirstPersonCamera();
                 break;
             }
-
             default:
                 break;
         }
@@ -874,7 +866,7 @@ void MP::_updateScene(float deltaTime) {
 void MP::run() {
     glfwSetWindowUserPointer(mpWindow, this);
 
-    // Variables para gestionar el tiempo
+    // Time handle variables
     double previousTime = glfwGetTime();
 
     while (!glfwWindowShouldClose(mpWindow)) {
@@ -921,7 +913,6 @@ void MP::run() {
                 break;
             }
         } else if (_currentCameraMode == ANIMATED_CAM) {
-            // La cámara ya se actualiza en _updateScene
             viewMatrix = _arcballCam->getViewMatrix();
             eyePosition = _arcballCam->getPosition();
         }
@@ -994,7 +985,6 @@ void MP::run() {
 
             glViewport(prevViewport[0], prevViewport[1], prevViewport[2], prevViewport[3]);
         }
-
 
         _updateScene(deltaTime);
 
@@ -1101,7 +1091,6 @@ GLuint MP::loadCubemap(const std::vector<std::string>& faces) {
     }
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    // Asegúrate de que el wrap mode sea GL_CLAMP_TO_EDGE para evitar bordes visibles
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
@@ -1111,9 +1100,9 @@ GLuint MP::loadCubemap(const std::vector<std::string>& faces) {
 
 
 void MP::_setupSkybox() {
-    // Define los vértices para un cubo
+    // Define vertex for cube
     float skyboxVertices[] = {
-        // posiciones
+        // positions
         -1.0f,  1.0f, -1.0f,
         -1.0f, -1.0f, -1.0f,
          1.0f, -1.0f, -1.0f,
@@ -1175,7 +1164,6 @@ void MP::_setupSkybox() {
         "textures/skybox/back.bmp"
     };
     _skyboxTexture = loadCubemap(faces);
-
     _skyboxShaderProgram = new CSCI441::ShaderProgram("shaders/skybox.v.glsl", "shaders/skybox.f.glsl");
     _skyboxShaderProgram->useProgram();
     _skyboxShaderProgram->setProgramUniform("skybox", 0);
@@ -1192,19 +1180,18 @@ bool MP::_loadCameraAnimation(const std::string& filename) {
 
     std::string line;
 
-
     if (!std::getline(infile, line)) {
         std::cerr << "Error: animation file is empty" << std::endl;
         return false;
     }
 
     int numFrames = 0;
+
     std::istringstream firstLineStream(line);
     if (!(firstLineStream >> numFrames)) {
         std::cerr << "Error: first line must contain number of frames" << std::endl;
         return false;
     }
-
     if (numFrames <= 0) {
         std::cerr << "Error: Frames number should be positive" << std::endl;
         return false;
@@ -1212,7 +1199,6 @@ bool MP::_loadCameraAnimation(const std::string& filename) {
     int currentFrame = 0;
     while (currentFrame < numFrames && std::getline(infile, line)) {
         if(line.empty() || line[0] == '#') continue;
-
         std::istringstream iss(line);
         CameraFrame frame;
         if (!(iss >> frame.eye.x >> frame.eye.y >> frame.eye.z
@@ -1232,12 +1218,10 @@ bool MP::_loadCameraAnimation(const std::string& filename) {
         std::cerr << "Error, animation frames were not loaded from" << filename << std::endl;
         return false;
     }
-
     if (currentFrame < numFrames) {
         std::cerr << "Warning: The animation text hax " << numFrames
                   << " frames, but only " << currentFrame << " frames were loaded" << std::endl;
     }
-
     return true;
 }
 
@@ -1246,12 +1230,11 @@ void MP::_computeAndSendMatrixUniforms(glm::mat4 modelMtx, glm::mat4 viewMtx, gl
     glm::mat4 mvpMtx = projMtx * viewMtx * modelMtx;
     // then send it to the shader on the GPU to apply to every vertex
     _lightingShaderProgram->setProgramUniform(_lightingShaderUniformLocations.mvpMatrix, mvpMtx);
-
-    // TODO #7: compute and send the normal matrix
     glm::mat3 normalMtx = glm::mat3(glm::transpose(glm::inverse(modelMtx)));
     _lightingShaderProgram->setProgramUniform(_lightingShaderUniformLocations.normalMatrix, normalMtx);
 
 }
+
 
 //*************************************************************************************
 //
