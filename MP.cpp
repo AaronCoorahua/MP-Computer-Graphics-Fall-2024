@@ -29,18 +29,16 @@ GLfloat getRand() {
 // Public Interface
 
 MP::MP()
-     : CSCI441::OpenGLEngine(4, 1,
-                             1920, 1080,
-                             "MP: Over Hill and Under Hill"),
-                            _isShiftPressed(false),
-                            _isLeftMouseButtonPressed(false),
-                            _isZooming(false),
-                            _currentCameraMode(ARCBALL),
-                            _isSmallViewportActive(false),
-                            _smallViewportCharacter(AARON_INTI){
-
+    : CSCI441::OpenGLEngine(4, 1, 1920, 1080, "MP: Over Hill and Under Hill"),
+      _isShiftPressed(false),
+      _isLeftMouseButtonPressed(false),
+      _isZooming(false),
+      _currentCameraMode(ARCBALL),
+      _isSmallViewportActive(false),
+      _smallViewportCharacter(AARON_INTI)
+{
     for(auto& _key : _keys) _key = GL_FALSE;
-    _mousePosition = glm::vec2(MOUSE_UNINITIALIZED, MOUSE_UNINITIALIZED );
+    _mousePosition = glm::vec2(MOUSE_UNINITIALIZED, MOUSE_UNINITIALIZED);
     _leftMouseButtonState = GLFW_RELEASE;
     _arcballCam = new ArcballCam();
     _freeCam = new CSCI441::FreeCam();
@@ -49,12 +47,15 @@ MP::MP()
     _rossFirstPersonCam = new CSCI441::FreeCam();
     _vyrmeFirstPersonCam = new CSCI441::FreeCam();
 
+    // Solicitar la ruta del archivo de animación al usuario
+    std::string animationFilePath;
+    std::cout << "Select the animation path: ";
+    std::cin >> animationFilePath;
 
-    if (!_loadCameraAnimation("animation.txt")) {
-        std::cerr << "WARNING: Not animation file loaded" << std::endl;
+    if (!_loadCameraAnimation(animationFilePath)) {
+        std::cerr << "WARNING: Animation file can not be loaded: " << animationFilePath << std::endl;
     }
 }
-
 MP::~MP() {
     delete _arcballCam;
     delete _freeCam;
@@ -82,16 +83,31 @@ void MP::handleKeyEvent(GLint key, GLint action) {
                 _selectedCharacter = AARON_INTI;
                 _currentCameraMode = ARCBALL;
                 _arcballCam->setLookAtPoint(_planePosition);
+                _arcballCam->setCameraView(
+                    _planePosition + glm::vec3(0.0f, 10.0f, 20.0f),
+                    _planePosition,
+                    CSCI441::Y_AXIS
+                );
                 break;
             case GLFW_KEY_X:
                 _selectedCharacter = ROSS;
                 _currentCameraMode = ARCBALL;
                 _arcballCam->setLookAtPoint(_rossPosition);
+                _arcballCam->setCameraView(
+                    _planePosition + glm::vec3(0.0f, 10.0f, 20.0f),
+                    _planePosition,
+                    CSCI441::Y_AXIS
+                );
                 break;
             case GLFW_KEY_C:
                 _selectedCharacter = VYRME;
                 _currentCameraMode = ARCBALL;
                 _arcballCam->setLookAtPoint(_vyrmePosition);
+                _arcballCam->setCameraView(
+                    _planePosition + glm::vec3(0.0f, 10.0f, 20.0f),
+                    _planePosition,
+                    CSCI441::Y_AXIS
+                );
                 break;
             case GLFW_KEY_1:
                 _isSmallViewportActive = !_isSmallViewportActive;
@@ -391,6 +407,7 @@ void MP::mSetupScene() {
     _projectionMatrix = glm::perspective(glm::radians(45.0f), aspectRatio, 0.1f, 1000.0f);
     _cameraSpeed = glm::vec2(0.25f, 0.02f);
 
+    // Directional Light properties
     // Directional Light properties
     glm::vec3 lightDirection = glm::vec3(-1.0f, -1.0f, -1.0f);
     glm::vec3 lightAmbientColor = glm::vec3(0.2f, 0.2f, 0.2f);

@@ -22,6 +22,7 @@
 class MP final : public CSCI441::OpenGLEngine {
 public:
     MP();
+    MP(const std::string& animationFilePath);
     ~MP() final;
 
     void run() final;
