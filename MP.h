@@ -44,6 +44,14 @@ public:
     static constexpr GLfloat MOUSE_UNINITIALIZED = -9999.0f;
 
 private:
+
+    struct CameraFrame {
+        glm::vec3 eye;
+        glm::vec3 direction;
+        glm::vec3 up;
+        float fov;
+    };
+
     //CHARACTERS
 
     enum Character { AARON_INTI, ROSS, VYRME };
@@ -74,7 +82,7 @@ private:
     /// \param projMtx the current projection matrix for our camera
     void _renderScene(glm::mat4 viewMtx, glm::mat4 projMtx, glm::vec3 eyePosition) const;
     /// \desc handles moving our FreeCam as determined by keyboard input
-    void _updateScene();
+    void _updateScene(float deltaTime);
 
     /// \desc tracks the number of different keys that can be present as determined by GLFW
     static constexpr GLuint NUM_KEYS = GLFW_KEY_LAST;
@@ -91,7 +99,8 @@ private:
     enum CameraMode {
         ARCBALL,
         FREE_CAM,
-        FIRST_PERSON_CAM
+        FIRST_PERSON_CAM,
+        ANIMATED_CAM
     } _currentCameraMode;
 
     /// \desc the static fixed camera in our world
@@ -227,7 +236,13 @@ private:
     void _setupSkybox();
 
 
+    std::vector<CameraFrame> _cameraAnimationFrames;
+    bool _isAnimating = false;
+    size_t _currentAnimationFrame = 0;
+    float _animationTime = 0.0f;
+    float _frameDuration = 1.0f / 30.0f;
 
+    bool _loadCameraAnimation(const std::string& filename);
 };
 
 void A3_engine_keyboard_callback(GLFWwindow *window, int key, int scancode, int action, int mods );

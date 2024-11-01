@@ -8,8 +8,9 @@
 #include <algorithm>
 
 #define STB_IMAGE_IMPLEMENTATION
+#include <iostream>
 #include <stb_image.h>
-
+#include <sstream>
 //*************************************************************************************
 //
 // Helper Functions
@@ -28,15 +29,15 @@ GLfloat getRand() {
 // Public Interface
 
 MP::MP()
-         : CSCI441::OpenGLEngine(4, 1,
-                                 1920, 1080,
-                                 "MP: Over Hill and Under Hill"),
-                                _isShiftPressed(false),
-                                _isLeftMouseButtonPressed(false),
-                                _isZooming(false),
-                                _currentCameraMode(ARCBALL),
-                                _isSmallViewportActive(false),
-                                _smallViewportCharacter(AARON_INTI){
+     : CSCI441::OpenGLEngine(4, 1,
+                             1920, 1080,
+                             "MP: Over Hill and Under Hill"),
+                            _isShiftPressed(false),
+                            _isLeftMouseButtonPressed(false),
+                            _isZooming(false),
+                            _currentCameraMode(ARCBALL),
+                            _isSmallViewportActive(false),
+                            _smallViewportCharacter(AARON_INTI){
 
     for(auto& _key : _keys) _key = GL_FALSE;
     _mousePosition = glm::vec2(MOUSE_UNINITIALIZED, MOUSE_UNINITIALIZED );
@@ -49,6 +50,9 @@ MP::MP()
     _vyrmeFirstPersonCam = new CSCI441::FreeCam();
 
 
+    if (!_loadCameraAnimation("animation.txt")) {
+        std::cerr << "WARNING: Not animation file loaded" << std::endl;
+    }
 }
 
 MP::~MP() {
@@ -69,36 +73,47 @@ void MP::handleKeyEvent(GLint key, GLint action) {
             case GLFW_KEY_Q:
             case GLFW_KEY_ESCAPE:
                 setWindowShouldClose();
-            break;
+                break;
             case GLFW_KEY_LEFT_SHIFT:
             case GLFW_KEY_RIGHT_SHIFT:
                 _isShiftPressed = true;
-            break;
+                break;
             case GLFW_KEY_Z:
                 _selectedCharacter = AARON_INTI;
-            _currentCameraMode = ARCBALL;
-            _arcballCam->setLookAtPoint(_planePosition);
-            break;
+                _currentCameraMode = ARCBALL;
+                _arcballCam->setLookAtPoint(_planePosition);
+                break;
             case GLFW_KEY_X:
                 _selectedCharacter = ROSS;
-            _currentCameraMode = ARCBALL;
-            _arcballCam->setLookAtPoint(_rossPosition);
-            break;
+                _currentCameraMode = ARCBALL;
+                _arcballCam->setLookAtPoint(_rossPosition);
+                break;
             case GLFW_KEY_C:
                 _selectedCharacter = VYRME;
-            _currentCameraMode = ARCBALL;
-            _arcballCam->setLookAtPoint(_vyrmePosition);
-            break;
+                _currentCameraMode = ARCBALL;
+                _arcballCam->setLookAtPoint(_vyrmePosition);
+                break;
             case GLFW_KEY_1:
-                    _isSmallViewportActive = !_isSmallViewportActive;
-            break;
+                _isSmallViewportActive = !_isSmallViewportActive;
+                break;
             case GLFW_KEY_2:
                 _currentCameraMode = FREE_CAM;
-            _freeCam->setPosition(glm::vec3(0.0f, 40.0f, 60.0f));
-            _freeCam->setTheta(glm::radians(0.0f));
-            _freeCam->setPhi(glm::radians(60.0f));
-            _freeCam->recomputeOrientation();
-            break;
+                _freeCam->setPosition(glm::vec3(0.0f, 40.0f, 60.0f));
+                _freeCam->setTheta(glm::radians(0.0f));
+                _freeCam->setPhi(glm::radians(60.0f));
+                _freeCam->recomputeOrientation();
+                break;
+
+            case GLFW_KEY_3:
+                if (!_cameraAnimationFrames.empty()) {
+                    _currentCameraMode = ANIMATED_CAM;
+                    _isAnimating = true;
+                    _currentAnimationFrame = 0;
+                    _animationTime = 0.0f;
+                } else {
+                    std::cerr << "Advertencia: No hay cuadros de animación cargados." << std::endl;
+                }
+                break;
 
             case GLFW_KEY_LEFT:
             case GLFW_KEY_RIGHT:
@@ -111,7 +126,7 @@ void MP::handleKeyEvent(GLint key, GLint action) {
                         _smallViewportCharacter = static_cast<Character>((_smallViewportCharacter + 1) % NUM_CHARACTERS);
                     }
                 }
-            break;
+                break;
 
             default:
                 break;
@@ -655,7 +670,7 @@ void MP::_renderScene(glm::mat4 viewMtx, glm::mat4 projMtx, glm::vec3 eyePositio
     //// END DRAWING VYRME ////
 }
 
-void MP::_updateScene() {
+void MP::_updateScene(float deltaTime) {
     float moveSpeed = 0.1f;
     float rotateSpeed = glm::radians(1.5f);
 
@@ -665,14 +680,36 @@ void MP::_updateScene() {
     const float MAX_Z = WORLD_SIZE - 3.0f;
 
     if (_currentCameraMode == FREE_CAM) {
-        // Move FreeCam with WASD
         if (_keys[GLFW_KEY_W]) {
             _freeCam->moveForward(moveSpeed);
         }
         if (_keys[GLFW_KEY_S]) {
             _freeCam->moveBackward(moveSpeed);
         }
-    } else { // ARCBALL
+    } else if (_currentCameraMode == ANIMATED_CAM && _isAnimating) {
+        _animationTime += deltaTime;
+
+        while (_animationTime >= _frameDuration && _isAnimating) {
+            _animationTime -= _frameDuration;
+            _currentAnimationFrame++;
+
+            if (_currentAnimationFrame >= _cameraAnimationFrames.size()) {
+                _currentAnimationFrame = 0;
+
+                _arcballCam->setCameraView(
+                    glm::vec3(0.0f, 50.0f, 100.0f),
+                    glm::vec3(0.0f, 0.0f, 0.0f),
+                    CSCI441::Y_AXIS
+                );
+            }
+        }
+
+        if (_isAnimating && _currentAnimationFrame < _cameraAnimationFrames.size()) {
+            const CameraFrame& frame = _cameraAnimationFrames[_currentAnimationFrame];
+            glm::vec3 lookAtPoint = frame.eye + frame.direction;
+            _arcballCam->setCameraView(frame.eye, lookAtPoint, frame.up);
+        }
+    } else {
         switch (_selectedCharacter) {
             case AARON_INTI: {
                 if (_keys[GLFW_KEY_W]) {
@@ -820,7 +857,14 @@ void MP::_updateScene() {
 void MP::run() {
     glfwSetWindowUserPointer(mpWindow, this);
 
+    // Variables para gestionar el tiempo
+    double previousTime = glfwGetTime();
+
     while (!glfwWindowShouldClose(mpWindow)) {
+        double currentTime = glfwGetTime();
+        float deltaTime = static_cast<float>(currentTime - previousTime);
+        previousTime = currentTime;
+
         glDrawBuffer(GL_BACK);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -832,7 +876,6 @@ void MP::run() {
         _projectionMatrix = glm::perspective(glm::radians(45.0f), aspectRatio, 0.1f, 1000.0f);
 
         glm::mat4 viewMatrix;
-        glm::mat4 projectionMatrix;
         glm::vec3 eyePosition;
 
         if (_currentCameraMode == ARCBALL) {
@@ -845,21 +888,25 @@ void MP::run() {
             switch (_selectedCharacter) {
                 case AARON_INTI:
                     viewMatrix = _intiFirstPersonCam->getViewMatrix();
-                    eyePosition = _intiFirstPersonCam->getPosition();
-                    break;
+                eyePosition = _intiFirstPersonCam->getPosition();
+                break;
                 case ROSS:
                     viewMatrix = _rossFirstPersonCam->getViewMatrix();
-                    eyePosition = _rossFirstPersonCam->getPosition();
-                    break;
+                eyePosition = _rossFirstPersonCam->getPosition();
+                break;
                 case VYRME:
                     viewMatrix = _vyrmeFirstPersonCam->getViewMatrix();
-                    eyePosition = _vyrmeFirstPersonCam->getPosition();
-                    break;
+                eyePosition = _vyrmeFirstPersonCam->getPosition();
+                break;
                 default:
                     viewMatrix = _arcballCam->getViewMatrix();
-                    eyePosition = _arcballCam->getPosition();
-                    break;
+                eyePosition = _arcballCam->getPosition();
+                break;
             }
+        } else if (_currentCameraMode == ANIMATED_CAM) {
+            // La cámara ya se actualiza en _updateScene
+            viewMatrix = _arcballCam->getViewMatrix();
+            eyePosition = _arcballCam->getPosition();
         }
 
         _renderScene(viewMatrix, _projectionMatrix, eyePosition);
@@ -889,40 +936,40 @@ void MP::run() {
                 switch (_smallViewportCharacter) {
                     case AARON_INTI:
                         fpViewMatrix = _intiFirstPersonCam->getViewMatrix();
-                        fpEyePosition = _intiFirstPersonCam->getPosition();
-                        break;
+                    fpEyePosition = _intiFirstPersonCam->getPosition();
+                    break;
                     case ROSS:
                         fpViewMatrix = _rossFirstPersonCam->getViewMatrix();
-                        fpEyePosition = _rossFirstPersonCam->getPosition();
-                        break;
+                    fpEyePosition = _rossFirstPersonCam->getPosition();
+                    break;
                     case VYRME:
                         fpViewMatrix = _vyrmeFirstPersonCam->getViewMatrix();
-                        fpEyePosition = _vyrmeFirstPersonCam->getPosition();
-                        break;
+                    fpEyePosition = _vyrmeFirstPersonCam->getPosition();
+                    break;
                     default:
                         fpViewMatrix = _arcballCam->getViewMatrix();
-                        fpEyePosition = _arcballCam->getPosition();
-                        break;
+                    fpEyePosition = _arcballCam->getPosition();
+                    break;
                 }
             } else {
 
                 switch (_selectedCharacter) {
                     case AARON_INTI:
                         fpViewMatrix = _intiFirstPersonCam->getViewMatrix();
-                        fpEyePosition = _intiFirstPersonCam->getPosition();
-                        break;
+                    fpEyePosition = _intiFirstPersonCam->getPosition();
+                    break;
                     case ROSS:
                         fpViewMatrix = _rossFirstPersonCam->getViewMatrix();
-                        fpEyePosition = _rossFirstPersonCam->getPosition();
-                        break;
+                    fpEyePosition = _rossFirstPersonCam->getPosition();
+                    break;
                     case VYRME:
                         fpViewMatrix = _vyrmeFirstPersonCam->getViewMatrix();
-                        fpEyePosition = _vyrmeFirstPersonCam->getPosition();
-                        break;
+                    fpEyePosition = _vyrmeFirstPersonCam->getPosition();
+                    break;
                     default:
                         fpViewMatrix = _arcballCam->getViewMatrix();
-                        fpEyePosition = _arcballCam->getPosition();
-                        break;
+                    fpEyePosition = _arcballCam->getPosition();
+                    break;
                 }
             }
 
@@ -931,14 +978,13 @@ void MP::run() {
             glViewport(prevViewport[0], prevViewport[1], prevViewport[2], prevViewport[3]);
         }
 
-        _updateScene();
+
+        _updateScene(deltaTime);
 
         glfwSwapBuffers(mpWindow);
         glfwPollEvents();
     }
 }
-
-
 
 
 
@@ -1119,6 +1165,64 @@ void MP::_setupSkybox() {
 }
 
 
+
+bool MP::_loadCameraAnimation(const std::string& filename) {
+    std::ifstream infile(filename);
+    if (!infile.is_open()) {
+        std::cerr << "Error: The animation file can not be opened " << filename << std::endl;
+        return false;
+    }
+
+    std::string line;
+
+
+    if (!std::getline(infile, line)) {
+        std::cerr << "Error: animation file is empty" << std::endl;
+        return false;
+    }
+
+    int numFrames = 0;
+    std::istringstream firstLineStream(line);
+    if (!(firstLineStream >> numFrames)) {
+        std::cerr << "Error: first line must contain number of frames" << std::endl;
+        return false;
+    }
+
+    if (numFrames <= 0) {
+        std::cerr << "Error: Frames number should be positive" << std::endl;
+        return false;
+    }
+    int currentFrame = 0;
+    while (currentFrame < numFrames && std::getline(infile, line)) {
+        if(line.empty() || line[0] == '#') continue;
+
+        std::istringstream iss(line);
+        CameraFrame frame;
+        if (!(iss >> frame.eye.x >> frame.eye.y >> frame.eye.z
+                  >> frame.direction.x >> frame.direction.y >> frame.direction.z
+                  >> frame.up.x >> frame.up.y >> frame.up.z
+                  >> frame.fov)) {
+            std::cerr << "Error: Incorrect format (" << currentFrame + 2 << "): " << line << std::endl;
+            continue;
+        }
+        _cameraAnimationFrames.push_back(frame);
+        currentFrame++;
+    }
+
+    infile.close();
+
+    if (_cameraAnimationFrames.empty()) {
+        std::cerr << "Error, animation frames were not loaded from" << filename << std::endl;
+        return false;
+    }
+
+    if (currentFrame < numFrames) {
+        std::cerr << "Warning: The animation text hax " << numFrames
+                  << " frames, but only " << currentFrame << " frames were loaded" << std::endl;
+    }
+
+    return true;
+}
 
 void MP::_computeAndSendMatrixUniforms(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx) const {
     // precompute the Model-View-Projection matrix on the CPU
