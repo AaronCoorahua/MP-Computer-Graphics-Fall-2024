@@ -405,8 +405,7 @@ void MP::mSetupScene() {
     _cameraSpeed = glm::vec2(0.25f, 0.02f);
 
     // Directional Light properties
-    // Directional Light properties
-    glm::vec3 lightDirection = glm::vec3(-1.0f, -1.0f, -1.0f);
+    glm::vec3 lightDirection = glm::vec3(-1.0f, -1.0f, 1.0f);
     glm::vec3 lightAmbientColor = glm::vec3(0.2f, 0.2f, 0.2f);
     glm::vec3 lightDiffuseColor = glm::vec3(1.0f, 1.0f, 1.0f);
     glm::vec3 lightSpecularColor = glm::vec3(1.0f, 1.0f, 1.0f);
