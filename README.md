@@ -38,7 +38,7 @@ The program should be compiled and run through CLion with the working directory 
 
 ## Responsibility Distribution
 - **Aaron** - Completed the entirety of Section A, Section B, and Extra Credit.
-- **Seth** - Completed Sections C and D.
+- **Seth** - Completed the entirety of Sections C and D.
 - **Ross** - Contributed to part of Section E.
 
 ## Time Spent
