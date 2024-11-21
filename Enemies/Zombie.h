@@ -1,14 +1,14 @@
-#ifndef VYRME_H
-#define VYRME_H
+#ifndef ZOMBIE_H
+#define ZOMBIE_H
 
-#include <glad/gl.h>
-
+#include <glad/gl.h> // Mantener esta inclusión
 #include <glm/glm.hpp>
 #include <glm/gtc/constants.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 
-class Vyrme {
+class Zombie {
 public:
-    Vyrme(GLuint shaderProgramHandle, GLint mvpMtxUniformLocation, GLint normalMtxUniformLocation);
+    Zombie(GLuint shaderProgramHandle, GLint mvpMtxUniformLocation, GLint normalMtxUniformLocation);
 
     void drawVehicle(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx);
 
@@ -17,6 +17,12 @@ public:
 
     glm::vec3 getPosition() const { return position; }
     float getRotationAngle() const { return rotationAngle; }
+
+    /**
+     * @brief Actualiza el estado del zombie.
+     * @param deltaTime Tiempo transcurrido desde la última actualización.
+     */
+    void update(float deltaTime); // Declaración del método update
 
 private:
     GLuint _shaderProgramHandle;
@@ -33,6 +39,7 @@ private:
     glm::vec3 _colorHead;
     glm::vec3 _colorFace;
     glm::vec3 _colorBag;
+    glm::vec3 _colorArm; // Nueva variable para el color de los brazos
 
     glm::vec3 position;
     float rotationAngle = 0.0f;
@@ -56,4 +63,4 @@ private:
     float _armSwingLimit = glm::radians(30.0f);
 };
 
-#endif // VYRME_H
+#endif //ZOMBIE_H

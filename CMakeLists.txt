@@ -4,9 +4,10 @@ set(CMAKE_CXX_STANDARD 17)
 set(SOURCE_FILES main.cpp MP.cpp MP.h Heroes/Aaron_Inti.cpp Heroes/Aaron_Inti.h
         Cameras/Arcballcam.h
         Cameras/Arcballcam.cpp
-        Heroes/Ross.h
-        Heroes/Ross.cpp
-        Heroes/Vyrme_Balargon.cpp)
+        Coin.h
+        Coin.cpp
+        Enemies/Zombie.cpp
+        Enemies/Zombie.h)
 add_executable(${PROJECT_NAME} ${SOURCE_FILES})
 
 # Windows with MinGW Installations

@@ -1,12 +1,10 @@
-#include "Vyrme_Balargon.h"
-
+#include "Zombie.h"
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
-
 #include <objects.hpp>
 #include <OpenGLUtils.hpp>
 
-Vyrme::Vyrme(GLuint shaderProgramHandle, GLint mvpMtxUniformLocation, GLint normalMtxUniformLocation)
+Zombie::Zombie(GLuint shaderProgramHandle, GLint mvpMtxUniformLocation, GLint normalMtxUniformLocation)
     : _shaderProgramHandle(shaderProgramHandle) {
 
     _shaderProgramUniformLocations.mvpMtx    = mvpMtxUniformLocation;
@@ -18,16 +16,16 @@ Vyrme::Vyrme(GLuint shaderProgramHandle, GLint mvpMtxUniformLocation, GLint norm
     _shaderProgramUniformLocations.materialShininess     = glGetUniformLocation(_shaderProgramHandle, "materialShininess");
 
 
-    _colorBody = glm::vec3(0.3f, 0.0f, 0.3f);
-    _colorHead = glm::vec3(1.0f, 1.0f, 1.0f);
+    _colorBody = glm::vec3(0.0f, 0.0f, 1.0f); // Cuerpo azul
+    _colorHead = glm::vec3(0.0f, 1.0f, 0.0f); // Cabeza verde
     _colorFace = glm::vec3(0.3f, 0.3f, 0.3f);
     _colorBag  = glm::vec3(0.6f, 0.6f, 0.6f);
-
+    _colorArm  = glm::vec3(0.0f, 1.0f, 0.0f); // Brazos verdes
 
     position = glm::vec3(0.0f);
 }
 
-void Vyrme::drawVehicle(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx) {
+void Zombie::drawVehicle(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx) {
 
     modelMtx = glm::translate(modelMtx, position);
     modelMtx = glm::rotate(modelMtx, rotationAngle, CSCI441::Y_AXIS);
@@ -41,7 +39,7 @@ void Vyrme::drawVehicle(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx
     _drawBag(modelMtx, viewMtx, projMtx);
 }
 
-void Vyrme::moveForward() {
+void Zombie::moveForward() {
 
     if (_leftArmSwingForward) {
         _leftArmAngle += _armSwingSpeed;
@@ -68,7 +66,7 @@ void Vyrme::moveForward() {
     }
 }
 
-void Vyrme::moveBackward() {
+void Zombie::moveBackward() {
     if (_leftArmSwingForward) {
         _leftArmAngle += _armSwingSpeed;
         if (_leftArmAngle >= _armSwingLimit) {
@@ -92,9 +90,30 @@ void Vyrme::moveBackward() {
             _rightArmSwingForward = true;
         }
     }
-
 }
-void Vyrme::_drawBody(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx) const {
+
+void Zombie::update(float deltaTime) {
+    // Implementa aquí la lógica de actualización del zombie.
+    // Por ejemplo, hacer que el zombie patrulle girando y moviéndose lentamente.
+
+    // Rotación continua
+    float rotationSpeed = glm::radians(20.0f); // 20 grados por segundo
+    rotationAngle += rotationSpeed * deltaTime;
+
+    // Mantener el ángulo dentro de [0, 2π]
+    if (rotationAngle > glm::two_pi<float>())
+        rotationAngle -= glm::two_pi<float>();
+    else if (rotationAngle < 0.0f)
+        rotationAngle += glm::two_pi<float>();
+
+    // Movimiento lento hacia adelante
+    float moveSpeed = 1.0f * deltaTime; // 1 unidad por segundo
+    position += glm::vec3(0.0f, 0.0f, -moveSpeed); // Mover hacia adelante en el eje Z
+
+    // Opcional: Agregar límites de movimiento o lógica adicional
+}
+
+void Zombie::_drawBody(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx) const {
     glm::mat4 bodyMtx = modelMtx;
     bodyMtx = glm::scale(bodyMtx, glm::vec3(0.8f, 2.0f, 0.5f));
 
@@ -105,7 +124,7 @@ void Vyrme::_drawBody(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx) 
     CSCI441::drawSolidCube(1.0f);
 }
 
-void Vyrme::_drawArmLeft(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx) const {
+void Zombie::_drawArmLeft(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx) const {
     glm::mat4 armMtx = modelMtx;
 
     armMtx = glm::translate(armMtx, glm::vec3(-0.55f, 0.7f, 0.0f));
@@ -118,12 +137,12 @@ void Vyrme::_drawArmLeft(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMt
 
     _computeAndSendMatrixUniforms(armMtx, viewMtx, projMtx);
 
-    _setMaterialColors(_colorBody, 64.0f);
+    _setMaterialColors(_colorArm, 64.0f); // Usar color de brazos
 
     CSCI441::drawSolidCube(1.0f);
 }
 
-void Vyrme::_drawArmRight(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx) const {
+void Zombie::_drawArmRight(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx) const {
     glm::mat4 armMtx = modelMtx;
 
     armMtx = glm::translate(armMtx, glm::vec3(0.55f, 0.7f, 0.0f));
@@ -136,12 +155,12 @@ void Vyrme::_drawArmRight(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projM
 
     _computeAndSendMatrixUniforms(armMtx, viewMtx, projMtx);
 
-    _setMaterialColors(_colorBody, 64.0f);
+    _setMaterialColors(_colorArm, 64.0f); // Usar color de brazos
 
     CSCI441::drawSolidCube(1.0f);
 }
 
-void Vyrme::_drawHead(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx) const {
+void Zombie::_drawHead(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx) const {
     glm::mat4 headMtx = modelMtx;
     headMtx = glm::translate(headMtx, glm::vec3(0.0f, 1.1f, 0.0f));
     headMtx = glm::scale(headMtx, glm::vec3(0.8f));
@@ -153,7 +172,7 @@ void Vyrme::_drawHead(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx) 
     CSCI441::drawSolidSphere(1.0f, 20, 20);
 }
 
-void Vyrme::_drawFace(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx) const {
+void Zombie::_drawFace(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx) const {
     glm::mat4 faceMtx = modelMtx;
     faceMtx = glm::translate(faceMtx, glm::vec3(0.0f, 1.1f, -0.18f));
     faceMtx = glm::scale(faceMtx, glm::vec3(0.7f));
@@ -165,7 +184,7 @@ void Vyrme::_drawFace(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx) 
     CSCI441::drawSolidSphere(1.0f, 20, 20);
 }
 
-void Vyrme::_drawCones(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx) const {
+void Zombie::_drawCones(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx) const {
 
     glm::mat4 coneRightMtx = modelMtx;
     coneRightMtx = glm::translate(coneRightMtx, glm::vec3(0.7f, 1.0f, 0.0f));
@@ -191,7 +210,7 @@ void Vyrme::_drawCones(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx)
     CSCI441::drawSolidCone(1.0f, 1.0f, 20, 20);
 }
 
-void Vyrme::_drawBag(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx) const {
+void Zombie::_drawBag(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx) const {
     glm::mat4 bagMtx = modelMtx;
     bagMtx = glm::translate(bagMtx, glm::vec3(0.0f, 0.0f, 0.35f));
     bagMtx = glm::scale(bagMtx, glm::vec3(0.4f, 0.6f, 0.3f));
@@ -203,15 +222,15 @@ void Vyrme::_drawBag(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx) c
     CSCI441::drawSolidCube(1.0f);
 }
 
-void Vyrme::_computeAndSendMatrixUniforms(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx) const {
+void Zombie::_computeAndSendMatrixUniforms(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx) const {
     glm::mat4 mvpMtx = projMtx * viewMtx * modelMtx;
     glProgramUniformMatrix4fv(_shaderProgramHandle, _shaderProgramUniformLocations.mvpMtx, 1, GL_FALSE, glm::value_ptr(mvpMtx));
 
-    glm::mat3 normalMtx = glm::mat3(glm::transpose(glm::inverse(modelMtx)));
+    glm::mat3 normalMtx = glm::transpose(glm::inverse(glm::mat3(modelMtx)));
     glProgramUniformMatrix3fv(_shaderProgramHandle, _shaderProgramUniformLocations.normalMtx, 1, GL_FALSE, glm::value_ptr(normalMtx));
 }
 
-void Vyrme::_setMaterialColors(glm::vec3 color, float shininess) const {
+void Zombie::_setMaterialColors(glm::vec3 color, float shininess) const {
     glm::vec3 ambientColor  = color * 0.2f;
     glm::vec3 diffuseColor  = color;
     glm::vec3 specularColor = glm::vec3(0.5f);

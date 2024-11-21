@@ -5,39 +5,73 @@
 #include <OpenGLEngine.hpp>
 #include <ShaderProgram.hpp>
 #include "FreeCam.hpp"
-#include "FixedCam.hpp"
 
 #include "Heroes/Aaron_Inti.h"
-#include "Heroes/Ross.h"
-#include "Heroes/Vyrme_Balargon.h"
+#include "Coin.h"
+#include "Enemies/Zombie.h" // Incluir el header de Zombie
 
 #include "stb_image.h"
 #include <glad/gl.h>
 #include <vector>
 #include <string>
 
-#include <vector>
-
+/**
+ * @class MP
+ * @brief Clase principal del motor que gestiona la escena, cámaras, iluminación y objetos.
+ */
 class MP final : public CSCI441::OpenGLEngine {
 public:
+    /**
+     * @brief Constructor de la clase MP.
+     */
     MP();
-    MP(const std::string& animationFilePath);
+
+    /**
+     * @brief Destructor de la clase MP.
+     */
     ~MP() final;
 
+    /**
+     * @brief Ejecuta el motor de OpenGL.
+     */
     void run() final;
 
-    // Handle key events inside the engine
+    /**
+     * @brief Maneja eventos de teclado.
+     *
+     * @param key Tecla presionada.
+     * @param action Acción de la tecla.
+     */
     void handleKeyEvent(GLint key, GLint action);
 
-    // Handle mouse button events inside the engine
+    /**
+     * @brief Maneja eventos de botón del mouse.
+     *
+     * @param button Botón del mouse.
+     * @param action Acción del botón.
+     */
     void handleMouseButtonEvent(GLint button, GLint action);
 
-    // Handle cursor movement events inside the engine
+    /**
+     * @brief Maneja eventos de movimiento del cursor.
+     *
+     * @param currMousePosition Posición actual del cursor.
+     */
     void handleCursorPositionEvent(glm::vec2 currMousePosition);
 
     static constexpr GLfloat MOUSE_UNINITIALIZED = -9999.0f;
 
 private:
+    // COINS
+
+    Coin* _coins[4]; // Arreglo para almacenar las cuatro monedas
+    glm::vec3 _coinPositions[4];
+
+    // ZOMBIES
+    static constexpr int NUM_ZOMBIES = 8;
+    Zombie* _zombies[NUM_ZOMBIES]; // Arreglo para almacenar los ocho zombies
+    glm::vec3 _zombiePositions[NUM_ZOMBIES]; // Arreglo para las posiciones de los zombies
+
     struct CameraFrame {
         glm::vec3 eye;
         glm::vec3 direction;
@@ -45,19 +79,13 @@ private:
         float fov;
     };
 
-    // Characters
-    enum Character { AARON_INTI, ROSS, VYRME };
+    // Personajes
+    enum Character { AARON_INTI };
     Character _selectedCharacter;
 
     glm::mat4 _projectionMatrix;
     glm::vec3 _planePosition;
     float _planeHeading;
-
-    glm::vec3 _rossPosition;
-    float _rossHeading;
-
-    glm::vec3 _vyrmePosition;
-    float _vyrmeHeading;
 
     void mSetupGLFW() final;
     void mSetupOpenGL() final;
@@ -68,10 +96,10 @@ private:
     void mCleanupBuffers() final;
     void mCleanupShaders() final;
 
-    // Draws the scene from a specific camera viewpoint
+    // Dibuja la escena desde un punto de vista específico de la cámara
     void _renderScene(glm::mat4 viewMtx, glm::mat4 projMtx, glm::vec3 eyePosition) const;
 
-    // Update scene elements based on time and input
+    // Actualiza elementos de la escena basados en el tiempo y la entrada
     void _updateScene(float deltaTime);
 
     static constexpr GLuint NUM_KEYS = GLFW_KEY_LAST;
@@ -80,32 +108,20 @@ private:
     glm::vec2 _mousePosition;
     GLint _leftMouseButtonState;
 
-    enum CameraMode { ARCBALL, FREE_CAM, FIRST_PERSON_CAM, ANIMATED_CAM } _currentCameraMode;
+    enum CameraMode { ARCBALL, FIRST_PERSON_CAM } _currentCameraMode;
 
     ArcballCam* _arcballCam;
-    CSCI441::FreeCam* _freeCam;
     CSCI441::FreeCam* _intiFirstPersonCam;
-    CSCI441::FreeCam* _rossFirstPersonCam;
-    CSCI441::FreeCam* _vyrmeFirstPersonCam;
     glm::vec2 _cameraSpeed;
 
     Aaron_Inti* _pPlane;
-    Ross* _rossHero;
-    Vyrme* _vyrmeHero;
 
-    static constexpr GLfloat WORLD_SIZE = 55.0f;
+
+    static constexpr GLfloat WORLD_SIZE = 105.0f;
     GLuint _groundVAO;
     GLsizei _numGroundPoints;
 
     void _createGroundBuffers();
-
-    struct BuildingData {
-        glm::mat4 modelMatrix;
-        glm::vec3 color;
-    };
-    std::vector<BuildingData> _buildings;
-
-    void _generateEnvironment();
 
     CSCI441::ShaderProgram* _lightingShaderProgram = nullptr;
 
@@ -148,18 +164,6 @@ private:
 
     void _computeAndSendMatrixUniforms(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx) const;
 
-    struct TreeData {
-        glm::mat4 modelMatrix;
-    };
-
-    struct RockData {
-        glm::mat4 modelMatrix;
-        float scale;
-    };
-
-    std::vector<TreeData> _trees;
-    std::vector<RockData> _rocks;
-
     bool _isShiftPressed;
     bool _isLeftMouseButtonPressed;
     bool _isZooming;
@@ -167,14 +171,11 @@ private:
     glm::vec2 _prevMousePosition;
 
     void _updateIntiFirstPersonCamera();
-    void _updateRossFirstPersonCamera();
-    void _updateVyrmeFirstPersonCamera();
 
     // SKYBOX
 
     bool _isSmallViewportActive;
-    Character _smallViewportCharacter;
-    static constexpr int NUM_CHARACTERS = 3;
+    static constexpr int NUM_CHARACTERS = 1;
 
     GLuint _skyboxVAO, _skyboxVBO;
     GLuint _skyboxTexture;
@@ -182,21 +183,11 @@ private:
 
     GLuint loadCubemap(const std::vector<std::string>& faces);
     void _setupSkybox();
-
-
-    //CAMERA ANIMATION
-
-    std::vector<CameraFrame> _cameraAnimationFrames;
-    bool _isAnimating = false;
-    size_t _currentAnimationFrame = 0;
-    float _animationTime = 0.0f;
-    float _frameDuration = 1.0f / 30.0f;
-
-    bool _loadCameraAnimation(const std::string& filename);
 };
 
+// Declaración de las funciones de callback
 void A3_engine_keyboard_callback(GLFWwindow *window, int key, int scancode, int action, int mods );
 void A3_engine_cursor_callback(GLFWwindow *window, double x, double y );
 void A3_engine_mouse_button_callback(GLFWwindow *window, int button, int action, int mods );
 
-#endif MP_ENGINE_H
+#endif // MP_ENGINE_H
